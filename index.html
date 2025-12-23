@@ -1,8 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Echo Grid">
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Echo Grid — Simple Capture (All Pocket Flags)</title>
 <style>
   :root{--txt:#e8eefc;--muted:#97a7c6;}
@@ -45,6 +49,43 @@
   .toast .big{font-weight:950}
   .toast .small{font-size:12px;color:var(--muted)}
   .err{display:none;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,120,120,.35);background:rgba(120,0,0,.15);color:#ffd1d1;font-size:12px;line-height:1.3;white-space:pre-wrap}
+
+/* === Mobile layout tweaks === */
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 420px;
+  padding: 10px;
+}
+
+@media (max-width: 600px) {
+  .wrap {
+    grid-template-columns: 1fr;
+  }
+
+  canvas {
+    width: 94vw !important;
+    height: 94vw !important;
+    max-width: 420px;
+    max-height: 420px;
+  }
+
+  .side {
+    width: 100%;
+    order: 2;
+  }
+}
 </style>
 </head>
 <body>
