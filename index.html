@@ -2,111 +2,150 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Echo Grid — Simple Capture (All Pocket Flags)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Echo Grid (Minimal)</title>
 <style>
-  :root{--txt:#e8eefc;--muted:#97a7c6;}
+  :root{
+    --bg1:#0b1020; --bg2:#111c33; --card:rgba(18,28,52,.72);
+    --stroke:rgba(255,255,255,.12); --txt:#e8eefc; --muted:#97a7c6;
+  }
   *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  body{margin:0;background:radial-gradient(1200px 800px at 20% 10%, #172142, #0b0f1a 55%);color:var(--txt)}
-  .wrap{max-width:1120px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr 380px;gap:16px}
-  @media (max-width: 980px){.wrap{grid-template-columns:1fr}}
-  .card{background:rgba(18,26,43,.92);border:1px solid rgba(36,53,86,.7);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
-  .boardCard{padding:14px;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden}
-  canvas{width:min(94vw,680px);height:min(94vw,680px);border-radius:12px;background:linear-gradient(180deg, rgba(27,39,64,.65), rgba(12,18,34,.65));border:1px solid rgba(36,53,86,.8);touch-action:none}
-  .side{padding:14px;display:flex;flex-direction:column;gap:12px}
-  .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-  .title{font-weight:950;letter-spacing:.2px}
-  .pill{padding:6px 10px;border-radius:999px;background:rgba(36,53,86,.55);border:1px solid rgba(36,53,86,.9);color:var(--muted);font-size:13px}
-  .pill b{color:var(--txt)}
-  .btns{display:flex;gap:10px}
-  button{flex:1;padding:10px 12px;border-radius:12px;border:1px solid rgba(36,53,86,.9);background:rgba(27,39,64,.75);color:var(--txt);cursor:pointer;font-weight:850}
-  button:hover{filter:brightness(1.08)}
-  button:disabled{opacity:.45;cursor:not-allowed}
-  .toggleRow{display:flex;gap:10px}
-  .toggle{flex:1;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:12px;border:1px solid rgba(36,53,86,.9);background:rgba(27,39,64,.45);color:var(--muted);font-size:13px;user-select:none}
-  .toggle input{accent-color:#8ab4ff}
-  .pieces{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .slot{padding:10px;border-radius:14px;border:1px dashed rgba(151,167,198,.35);background:rgba(11,15,26,.25);min-height:124px;display:flex;flex-direction:column;gap:8px;justify-content:center;align-items:center}
-  .slot.used{opacity:.28;filter:saturate(.5) brightness(.85)}
-  .slot.reco{outline:2px solid rgba(255,255,255,.18);box-shadow:0 0 0 6px rgba(125,211,252,.08)}
-  .meta{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
-  .chip{font-size:12px;color:var(--muted);border:1px solid rgba(255,255,255,.14);padding:4px 8px;border-radius:999px}
-  .hint{color:var(--muted);font-size:13px;line-height:1.35}
-  .coachCard{padding:12px;border-radius:14px;background:rgba(11,15,26,.22);border:1px solid rgba(36,53,86,.65)}
-  .coachCard h3{margin:0;font-size:14px}
-  .coachCard .sub{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.35}
-  .coachCard .sep{margin-top:10px;border-top:1px solid rgba(36,53,86,.55);padding-top:10px}
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:18px}
-  .modal{width:min(560px,95vw);padding:18px;border-radius:16px}
-  .modal h2{margin:0 0 6px}
-  .modal p{margin:0 0 14px;color:var(--muted)}
-  .toast{position:absolute;left:18px;top:18px;pointer-events:none;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);display:flex;gap:10px;align-items:center;opacity:0;transform:translateY(-10px);transition:opacity .18s ease, transform .18s ease}
-  .toast.show{opacity:1;transform:translateY(0)}
-  .toast .big{font-weight:950}
-  .toast .small{font-size:12px;color:var(--muted)}
-  .err{display:none;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,120,120,.35);background:rgba(120,0,0,.15);color:#ffd1d1;font-size:12px;line-height:1.3;white-space:pre-wrap}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 20% 10%, #172a55, #0b0f1a 55%);
+    color:var(--txt);
+    display:flex; align-items:center; justify-content:center;
+    padding:14px;
+  }
+  .app{width:100%; max-width:560px;}
+  .hud{
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .pill{
+    background:rgba(20,32,58,.55);
+    border:1px solid var(--stroke);
+    border-radius:999px;
+    padding:8px 12px;
+    font-weight:700;
+    display:flex; gap:10px; align-items:center;
+  }
+  .pill span{color:var(--muted); font-weight:700}
+  .boardCard, .piecesCard{
+    background:linear-gradient(180deg, rgba(18,28,52,.80), rgba(10,14,26,.72));
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .boardCard{padding:12px;}
+  canvas#c{
+    display:block;
+    width:min(94vw, 520px);
+    height:min(94vw, 520px);
+    max-width:520px; max-height:520px;
+    border-radius:14px;
+    background:linear-gradient(180deg, rgba(27,39,64,.65), rgba(12,18,34,.65));
+    border:1px solid rgba(36,53,86,.80);
+    touch-action:none;
+    margin:0 auto;
+  }
+  .piecesCard{margin-top:10px; padding:10px;}
+  .piecesRow{
+    display:flex; gap:10px; justify-content:space-between;
+  }
+  .slot{
+    flex:1;
+    border-radius:14px;
+    border:1px solid rgba(36,53,86,.80);
+    background:rgba(27,39,64,.22);
+    padding:8px;
+    position:relative;
+    min-width:0;
+  }
+  .slot.used{opacity:.35; filter:saturate(.6);}
+  .slotLabel{
+    margin-top:6px;
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
+    font-weight:800;
+    letter-spacing:.2px;
+  }
+  .mini{
+    width:100%; height:76px;
+    border-radius:12px;
+    display:block;
+    background:rgba(27,39,64,.22);
+  }
+  #err{
+    margin-top:10px;
+    white-space:pre-wrap;
+    color:#ffd0d0;
+    background:rgba(120,20,20,.22);
+    border:1px solid rgba(255,120,120,.25);
+    padding:10px;
+    border-radius:12px;
+    display:none;
+  }
+</style>
+<style>
+/* --- Layout override: scores top, board center, blocks bottom --- */
+body {
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.app {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hud {
+  width: 100%;
+  justify-content: center !important;
+  margin-top: 10px;
+  margin-bottom: 14px;
+}
+.boardCard {
+  width: 100%;
+}
+.piecesCard {
+  width: 100%;
+  margin-top: 16px !important;
+}
+.piecesRow {
+  justify-content: center !important;
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card boardCard">
-    <div class="toast" id="toast"><div class="big" id="toastBig">CAPTURE!</div><div class="small" id="toastSmall">Pocket secured</div></div>
-    <canvas id="c" width="680" height="680"></canvas>
+  <div class="app">
+    <div class="hud">
+      <div class="pill"><span>Score</span><b id="score">0</b></div>
+      <div class="pill"><span>Top</span><b id="best">0</b></div>
+    </div>
+
+    <div id="banner" style="display:none;margin:10px 0;padding:10px 12px;border-radius:14px;
+      background:rgba(20,32,58,.55);border:1px solid rgba(255,255,255,.12);width:100%;">
+      <b id="bannerTitle">Game Over</b>
+      <div id="bannerText" style="color:var(--muted);margin-top:4px;">No legal placements remain.</div>
+      <button id="restartBtn" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:12px;
+        border:1px solid rgba(255,255,255,.12);background:rgba(27,39,64,.35);color:var(--txt);font-weight:800;cursor:pointer;">
+        New Game
+      </button>
+    </div>
+
+    <div class="boardCard">
+      <canvas id="c" width="680" height="680"></canvas>
+    </div>
+
+    <div class="piecesCard">
+      <div class="piecesRow" id="pieces"></div>
+    </div>
+
+    <div id="err"></div>
   </div>
-
-  <div class="card side">
-    <div class="row">
-      <div class="title">Echo Grid</div>
-      <div class="pill">Simple Capture + All Flags</div>
-    </div>
-
-    <div class="row">
-      <div class="pill">Score: <b id="score">0</b></div>
-      <div class="pill">Best: <b id="best">0</b></div>
-      <div class="pill">Heat: <b id="heat">1.00</b></div>
-      <div class="pill">Combo: <b id="combo">x1</b></div>
-    </div>
-
-    <div class="btns">
-      <button id="new">New</button>
-      <button id="undo" disabled>Undo</button>
-    </div>
-
-    <div class="toggleRow">
-      <label class="toggle"><span>Sound</span><input id="sound" type="checkbox" checked/></label>
-      <label class="toggle"><span>Coach</span><input id="coach" type="checkbox" checked/></label>
-    </div>
-
-    <div id="err" class="err"></div>
-
-    <div class="pieces" id="pieces"></div>
-
-    <div class="coachCard">
-      <div class="row" style="gap:8px">
-        <h3>Coach — Why this move?</h3>
-        <div class="pill" style="margin:0">Help: <b id="coachHelp">100%</b></div>
-      </div>
-      <div class="sub" id="coachWhy">Coach suggests a capture (or safe space-saving move).</div>
-      <div class="sep">
-        <div style="font-weight:850;margin-bottom:6px;color:rgba(232,238,252,.95)">What just happened</div>
-        <div class="sub" id="coachRecap">Make a move to see a recap.</div>
-      </div>
-    </div>
-
-    <div class="hint">
-      <b>Capture:</b> surround empty space to clear bordering blocks.<br/>
-      <b>Flags:</b> while dragging, <b>every empty cell</b> that would be captured shows a flag.
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="overlay">
-  <div class="card modal">
-    <h2>Game Over</h2>
-    <p>No legal placements with the current set.</p>
-    <div class="btns"><button id="again">Play again</button></div>
-  </div>
-</div>
 
 <script>
 (() => {
@@ -114,27 +153,45 @@
   const canvas=document.getElementById("c");
   const ctx=canvas.getContext("2d");
   const errEl=document.getElementById("err");
+  const scoreEl=document.getElementById("score");
+  const bestEl=document.getElementById("best");
+  const piecesEl=document.getElementById("pieces");
 
-  // ===== Special blocks =====
-  const GRAY_START_USES = 4;      // gray tile starts at 4
-  const GRAY_COUNT = 6;           // how many gray tiles spawn
-  const BLACK_TO_WALL_TURNS = 3;  // black seed counts down 3->2->1->wall
+  // Special tiles
+  const GRAY_START_USES = 4;
+  const GRAY_COUNT = 6;
+  const BLACK_TO_WALL_TURNS = 3;
 
-  // Cell encoding on board:
-  // null = empty
-  // {t:'c', color:'#hex'} = normal colored block
-  // {t:'g', uses:n} = gray exhaustion tile
-  // {t:'b', ttl:n} = black seed (counts down into wall)
-  // {t:'w'} = wall (permanent, un-clearable, acts like board edge)
-  const isEmpty = v => v == null;
-  const isGray = v => v && v.t === 'g';
-  const isBlackSeed = v => v && v.t === 'b';
-  const isWall = v => v && v.t === 'w';
-  const isColor = v => v && v.t === 'c';
-  const isPlaceableCell = v => isEmpty(v) || isGray(v);
-  const isBlocked = v => !isEmpty(v);
+  // Cell types:
+  // null empty
+  // {t:'c', color:'#hex'} colored
+  // {t:'g', uses:n} gray countdown
+  // {t:'b', ttl:n} black seed countdown -> wall
+  // {t:'w'} wall
+  const isEmpty=v=>v==null;
+  const isGray=v=>v&&v.t==='g';
+  const isBlack=v=>v&&v.t==='b';
+  const isWall=v=>v&&v.t==='w';
+  const isColor=v=>v&&v.t==='c';
+  const isPlaceable=v=>isEmpty(v)||isGray(v);
 
-  // round rect helper (robust)
+  const COLORS=["#6ee7ff","#a78bfa","#fb7185","#34d399","#fbbf24","#60a5fa","#f472b6","#22c55e","#f97316"];
+  const SHAPES=[
+    [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]],
+    [[1,1,1,1]], [[1],[1],[1],[1]], [[1,1],[1,1]],
+    [[1,0],[1,0],[1,1]], [[0,1],[0,1],[1,1]],
+    [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]],
+    [[1,1,1],[1,0,0]], [[1,1,1],[0,0,1]],
+  ];
+
+  let board=null;
+  let pieces=[];
+  let score=0, best=0;
+
+  // input
+  let dragging=null; // {piece, idx, x,y}
+  let hoverCell=null;
+
   function rr(c,x,y,w,h,r){
     r=Math.max(0, Math.min(r, Math.min(w,h)/2));
     c.beginPath();
@@ -145,78 +202,23 @@
     c.arcTo(x,y,x+w,y,r);
     c.closePath();
   }
-
-  const scoreEl=document.getElementById("score");
-  const bestEl=document.getElementById("best");
-  const heatEl=document.getElementById("heat");
-  const comboEl=document.getElementById("combo");
-  // Undo budget UI
-  const hudRows = document.querySelectorAll('.side .row');
-  const hudRow = hudRows[1] || hudRows[0];
-  const undoPill = document.createElement('div');
-  undoPill.className='pill';
-  undoPill.innerHTML = 'Undos: <b id="undosLeft">10</b>';
-  if(hudRow) hudRow.appendChild(undoPill);
-  const undosLeftEl = document.getElementById('undosLeft');
-  const piecesEl=document.getElementById("pieces");
-  const overlay=document.getElementById("overlay");
-  const btnNew=document.getElementById("new");
-  const btnUndo=document.getElementById("undo");
-  const btnAgain=document.getElementById("again");
-  const soundToggle=document.getElementById("sound");
-  const coachToggle=document.getElementById("coach");
-  const coachHelpEl=document.getElementById("coachHelp");
-  const coachWhyEl=document.getElementById("coachWhy");
-  const coachRecapEl=document.getElementById("coachRecap");
-  const toast=document.getElementById("toast");
-  const toastBig=document.getElementById("toastBig");
-  const toastSmall=document.getElementById("toastSmall");
-
-  const COLORS=["#6ee7ff","#a78bfa","#fb7185","#34d399","#fbbf24","#60a5fa","#f472b6","#22c55e","#f97316"];
-  const SHAPES=[
-    [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]], [[1,1,1,1]], [[1],[1],[1],[1]],
-    [[1,1],[1,1]], [[1,1,1],[1,1,1]], [[1,1],[1,1],[1,1]],
-    [[1,0],[1,0],[1,1]], [[0,1],[0,1],[1,1]], [[1,1,1],[0,1,0]],
-    [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]],
-    [[1,1,1],[1,0,0]], [[1,1,1],[0,0,1]], [[1,0,0],[1,1,1]], [[0,0,1],[1,1,1]],
-  ];
-
-  let board, pieces;
-  let score=0,best=0,turn=0,heat=1.0;
-  let combo=0; // consecutive captures
-  let comboMult=1;
-  let coachAssist=1.0, coachSuggestion=null;
-  let dragging=null, hoverCell=null;
-  const undoStack=[];
-  const UNDO_LIMIT=80; // stored steps (internal)
-  let undoBudget=10; // you only get 10 undos per run
-
-
-  const flashes=[];
-  const edgeFlashes=[]; // new wall pulses
-  const recapLog=[];
-  const now=()=>performance.now();
-  const randInt=n=>Math.floor(Math.random()*n);
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-
-  function deepCloneCell(v){
-    if(v==null) return null;
-    // small objects; JSON clone is fine here
-    return JSON.parse(JSON.stringify(v));
+  function hexToRgba(hex,a){
+    const h=hex.replace("#","");
+    const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+    return `rgba(${r},${g},${b},${a})`;
   }
-  function copyBoard(b){ return b.map(row => row.map(deepCloneCell)); }
-  const deepClone=o=>JSON.parse(JSON.stringify(o));
 
   function emptyBoard(){return Array.from({length:GRID},()=>Array(GRID).fill(null));}
+
   function cellSize(){const inner=canvas.width-PAD*2; return (inner-GAP*(GRID-1))/GRID;}
   function cellToPx(x,y){const s=cellSize(); return {px:PAD+x*(s+GAP), py:PAD+y*(s+GAP), s};}
-  function getCanvasRect(){return canvas.getBoundingClientRect();}
+  function getRect(){return canvas.getBoundingClientRect();}
   function clientToCanvas(clientX,clientY){
-    const r=getCanvasRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
+    const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
     return {x:(clientX-r.left)*sx, y:(clientY-r.top)*sy};
   }
   function pointerToGrid(clientX,clientY){
-    const r=getCanvasRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
+    const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
     const x=(clientX-r.left)*sx, y=(clientY-r.top)*sy;
     const s=cellSize();
     const gx=Math.floor((x-PAD+GAP/2)/(s+GAP));
@@ -226,106 +228,48 @@
     if(gx<0||gy<0||gx>=GRID||gy>=GRID) return null;
     return {x:gx,y:gy};
   }
-  function toastShow(title,subtitle){
-    toastBig.textContent=title; toastSmall.textContent=subtitle;
-    toast.classList.add("show");
-    clearTimeout(toast._t);
-    toast._t=setTimeout(()=>toast.classList.remove("show"),950);
-  }
-  function hexToRgba(hex,a){
-    const h=hex.replace("#","");
-    const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
-    return `rgba(${r},${g},${b},${a})`;
-  }
-
-  // ===== Audio =====
-  let audioCtx=null;
-  function ensureAudio(){
-    if(!soundToggle.checked) return null;
-    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
-    return audioCtx;
-  }
-  function beep(freq=440,dur=0.07,type="sine",gain=0.05){
-    const ac=ensureAudio(); if(!ac) return;
-    const o=ac.createOscillator(), g=ac.createGain();
-    o.type=type; o.frequency.value=freq;
-    g.gain.value=gain;
-    o.connect(g); g.connect(ac.destination);
-    o.start();
-    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+dur);
-    o.stop(ac.currentTime+dur);
-  }
-  const sfx={
-    pick(){beep(320,0.05,"triangle",0.04);},
-    place(){beep(220,0.06,"triangle",0.06);},
-    bad(){beep(160,0.11,"sawtooth",0.03);},
-    cap(){beep(520,0.07,"sine",0.06);beep(680,0.08,"sine",0.05);},
-    edge(){beep(740,0.06,"sine",0.05);beep(520,0.08,"triangle",0.04);}
-  };
 
   function newPiece(){
-    const bigBias=clamp((heat-1.0)/1.5,0,1);
-    const shapeIdx=(Math.random()<(0.25+0.45*bigBias)) ? randInt(SHAPES.length) : randInt(Math.min(8,SHAPES.length));
-    const shape=SHAPES[shapeIdx];
-    const color=COLORS[randInt(COLORS.length)];
-    const h=shape.length, w=shape[0].length;
-    return {shape,w,h,color,used:false};
+    const shape=SHAPES[Math.floor(Math.random()*SHAPES.length)];
+    const color=COLORS[Math.floor(Math.random()*COLORS.length)];
+    return {shape, h:shape.length, w:shape[0].length, color, used:false};
   }
-  function rollPieces(){pieces=[newPiece(),newPiece(),newPiece()]; renderPieces(); recomputeCoach();}
+  function rollPieces(){ pieces=[newPiece(),newPiece(),newPiece()]; renderPieces(); }
 
-  function canPlace(piece,gx,gy){
-    for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
-      if(!piece.shape[y][x]) continue;
+  function canPlace(p,gx,gy){
+    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+      if(!p.shape[y][x]) continue;
       const bx=gx+x, by=gy+y;
       if(bx<0||by<0||bx>=GRID||by>=GRID) return false;
-      if(!isPlaceableCell(board[by][bx])) return false; // empty OR gray
+      if(!isPlaceable(board[by][bx])) return false;
     }
     return true;
   }
 
-  function placePiece(piece,gx,gy){
+  function placePiece(p,gx,gy){
     let effective=0;
-    const touched=[];
-    for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
-      if(!piece.shape[y][x]) continue;
+    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+      if(!p.shape[y][x]) continue;
       const bx=gx+x, by=gy+y;
-      touched.push({x:bx,y:by});
       const cur=board[by][bx];
       if(isGray(cur)){
         const next=(cur.uses|0)-1;
         if(next>0) board[by][bx]={t:'g', uses: next};
         else board[by][bx]={t:'b', ttl: BLACK_TO_WALL_TURNS};
       } else {
-        board[by][bx]={t:'c', color: piece.color};
+        board[by][bx]={t:'c', color:p.color};
         effective++;
       }
     }
-    return {effective, touched};
+    return effective;
   }
 
-  function simulatePlaceOnBoard(b,piece,gx,gy){
-    for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
-      if(!piece.shape[y][x]) continue;
-      const bx=gx+x, by=gy+y;
-      const cur=b[by][bx];
-      if(isGray(cur)){
-        const next=(cur.uses|0)-1;
-        if(next>0) b[by][bx]={t:'g', uses: next};
-        else b[by][bx]={t:'b', ttl: BLACK_TO_WALL_TURNS};
-      } else {
-        b[by][bx]={t:'c', color: piece.color};
-      }
-    }
-  }
-
-  // ===== Pockets & capture =====
+  // pockets: empties NOT connected to edge (walls behave like edge)
   function pocketsOnBoard(b){
     const visited=Array.from({length:GRID},()=>Array(GRID).fill(false));
     const q=[];
     const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
 
-    // board edge empties are outside-connected
     for(let i=0;i<GRID;i++){
       if(isEmpty(b[0][i])){visited[0][i]=true;q.push([i,0]);}
       if(isEmpty(b[GRID-1][i])){visited[GRID-1][i]=true;q.push([i,GRID-1]);}
@@ -333,7 +277,6 @@
       if(isEmpty(b[i][GRID-1])){visited[i][GRID-1]=true;q.push([GRID-1,i]);}
     }
 
-    // any empty adjacent to a wall is also outside-connected (wall behaves like edge)
     for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
       if(!isWall(b[y][x])) continue;
       for(const [dx,dy] of dirs){
@@ -351,7 +294,7 @@
         const nx=x+dx, ny=y+dy;
         if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
         if(visited[ny][nx]) continue;
-        if(isBlocked(b[ny][nx])) continue;
+        if(!isEmpty(b[ny][nx])) continue;
         visited[ny][nx]=true; q.push([nx,ny]);
       }
     }
@@ -360,10 +303,10 @@
     const seen=Array.from({length:GRID},()=>Array(GRID).fill(false));
     for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
       if(isEmpty(b[y][x]) && !visited[y][x] && !seen[y][x]){
-        const pq=[[x,y]]; seen[y][x]=true;
+        const stack=[[x,y]]; seen[y][x]=true;
         const cells=[];
-        while(pq.length){
-          const [cx,cy]=pq.pop();
+        while(stack.length){
+          const [cx,cy]=stack.pop();
           cells.push({x:cx,y:cy});
           for(const [dx,dy] of dirs){
             const nx=cx+dx, ny=cy+dy;
@@ -371,7 +314,7 @@
             if(seen[ny][nx]) continue;
             if(!isEmpty(b[ny][nx])) continue;
             if(visited[ny][nx]) continue;
-            seen[ny][nx]=true; pq.push([nx,ny]);
+            seen[ny][nx]=true; stack.push([nx,ny]);
           }
         }
         pockets.push(cells);
@@ -380,9 +323,35 @@
     return pockets;
   }
 
-  function captureOnBoard(b){
-    const pockets=pocketsOnBoard(b);
-    if(!pockets.length) return {cleared:0, interior:0, clearedCells:[]};
+  function tickBlackSeedsFlagged(){
+    const pockets=pocketsOnBoard(board);
+    if(!pockets.length) return 0;
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    const targets=new Set();
+    for(const pocket of pockets){
+      for(const c of pocket){
+        for(const [dx,dy] of dirs){
+          const nx=c.x+dx, ny=c.y+dy;
+          if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+          if(isBlack(board[ny][nx])) targets.add(ny*GRID+nx);
+        }
+      }
+    }
+    let formed=0;
+    for(const key of targets){
+      const y=Math.floor(key/GRID), x=key%GRID;
+      const v=board[y][x];
+      if(!isBlack(v)) continue;
+      const next=(v.ttl|0)-1;
+      if(next>0) board[y][x]={t:'b', ttl: next};
+      else { board[y][x]={t:'w'}; formed++; }
+    }
+    return formed;
+  }
+
+  function capture(){
+    const pockets=pocketsOnBoard(board);
+    if(!pockets.length) return {cleared:0, interior:0};
     const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
     const boundary=new Set();
     let interior=0;
@@ -392,212 +361,72 @@
         for(const [dx,dy] of dirs){
           const nx=cell.x+dx, ny=cell.y+dy;
           if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
-          if(isBlocked(b[ny][nx])) boundary.add(ny*GRID+nx);
+          if(board[ny][nx]!=null) boundary.add(ny*GRID+nx);
         }
       }
     }
-    const clearedCells=[];
+    let cleared=0;
     for(const key of boundary){
       const y=Math.floor(key/GRID), x=key%GRID;
-      const v=b[y][x];
-      // Only clear normal colored blocks
-      if(isColor(v)){
-        clearedCells.push({x,y});
-        b[y][x]=null;
-      }
+      if(isColor(board[y][x])){ board[y][x]=null; cleared++; }
     }
-    return {cleared:clearedCells.length, interior, clearedCells};
+    return {cleared, interior};
   }
 
-  function applyCapture(){
-    const result=captureOnBoard(board);
-    if(result.cleared>0) flashes.push({cells:result.clearedCells,t0:now()});
-    return result;
+  function updateHUD(){
+    scoreEl.textContent=score;
+    bestEl.textContent=best;
   }
 
-  // ===== Flags in every pocket cell =====
-  function pocketsIfPlaced(piece,gx,gy){
-    if(!canPlace(piece,gx,gy)) return [];
-    const b2=copyBoard(board);
-    simulatePlaceOnBoard(b2,piece,gx,gy);
-    return pocketsOnBoard(b2);
-  }
 
-  function drawFlagCell(cellX, cellY, scale=1.0){
-    const s=cellSize();
-    const {px,py}=cellToPx(cellX, cellY);
-    const baseX=px+s*0.55;
-    const baseY=py+s*0.78;
-    const poleH=s*0.38*scale;
-    const flagW=s*0.22*scale;
-    const flagH=s*0.14*scale;
-
-    ctx.strokeStyle="rgba(255,255,255,.55)";
-    ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(baseX,baseY); ctx.lineTo(baseX, baseY-poleH); ctx.stroke();
-
-    ctx.fillStyle="rgba(248,113,113,.95)";
-    ctx.beginPath();
-    ctx.moveTo(baseX, baseY-poleH);
-    ctx.lineTo(baseX+flagW, baseY-poleH+flagH*0.45);
-    ctx.lineTo(baseX, baseY-poleH+flagH);
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle="rgba(0,0,0,.25)";
-    rr(ctx, baseX-6*scale, baseY-4*scale, 12*scale, 6*scale, 3*scale); ctx.fill();
-  }
-
-  function drawFlagsForPockets(pockets){
-    for(const pocket of pockets){
-      const sc = pocket.length>14 ? 0.82 : 0.92;
-      for(const c of pocket) drawFlagCell(c.x, c.y, sc);
-    }
-  }
-
-  // ===== Black seed ticking -> walls =====
-  function tickBlackSeedsFlagged(){
-    // A black seed only ticks down if it is adjacent to a POCKET cell (i.e., a flagged cell).
-    // We use current pockets on the board right after placement (before capture clears borders).
-    const pockets = pocketsOnBoard(board);
-    if(!pockets.length) return [];
-    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-    const targets=new Set();
-    for(const pocket of pockets){
-      for(const c of pocket){
-        for(const [dx,dy] of dirs){
-          const nx=c.x+dx, ny=c.y+dy;
-          if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
-          const v = board[ny][nx];
-          if(isBlackSeed(v)) targets.add(ny*GRID+nx);
+  function anyMoveAvailable(){
+    for(const p of pieces){
+      if(p.used) continue;
+      for(let y=0;y<GRID;y++){
+        for(let x=0;x<GRID;x++){
+          if(canPlace(p,x,y)) return true;
         }
       }
     }
-    const newWalls=[];
-    for(const key of targets){
-      const y=Math.floor(key/GRID), x=key%GRID;
-      const v=board[y][x];
-      if(!isBlackSeed(v)) continue;
-      const next=(v.ttl|0)-1;
-      if(next>0){
-        board[y][x]={t:'b', ttl: next};
-      } else {
-        board[y][x]={t:'w'};
-        newWalls.push({x,y});
-      }
-    }
-    return newWalls;
+    return false;
   }
 
-  // ===== Coach =====
-  function updateCoachAssist(){
-    const byTurns=clamp(1 - Math.max(0,turn-8)/38, 0, 1);
-    const byScore=clamp(1 - score/2200, 0, 1);
-    coachAssist=clamp(Math.min(byTurns,byScore),0,1);
-    coachHelpEl.textContent=Math.round(coachAssist*100)+"%";
-    coachToggle.disabled = coachAssist<=0.001;
-    if(coachAssist<=0.001) coachToggle.checked=false;
+  const banner=document.getElementById("banner");
+  const bannerTitle=document.getElementById("bannerTitle");
+  const bannerText=document.getElementById("bannerText");
+  const restartBtn=document.getElementById("restartBtn");
+  let gameOver=false;
+
+  function setGameOver(on){
+    gameOver=!!on;
+    if(banner) banner.style.display = on ? "block" : "none";
   }
 
-  function countFilledOn(b){
-    let n=0;
-    for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++) if(!isEmpty(b[y][x])) n++;
-    return n;
-  }
-  function countFilled(){return countFilledOn(board);}
 
-  function scoreMoveOnBoard(tempBoard){
-    const after=copyBoard(tempBoard);
-    const cap=captureOnBoard(after);
-    const open=GRID*GRID - countFilledOn(after);
-    return cap.cleared*220 + cap.interior*2 + open*0.6;
-  }
-
-  function computeCoachSuggestion(){
-    if(!coachToggle.checked || coachAssist<=0.001) return null;
-    const cands=[];
-    for(let idx=0; idx<pieces.length; idx++){
-      const p=pieces[idx]; if(p.used) continue;
-      for(let gy=0; gy<GRID; gy++) for(let gx=0; gx<GRID; gx++){
-        if(!canPlace(p,gx,gy)) continue;
-        const b2=copyBoard(board);
-        simulatePlaceOnBoard(b2,p,gx,gy);
-        const val=scoreMoveOnBoard(b2);
-        const pockets=pocketsOnBoard(b2);
-        const quality = pockets.length ? "CAPTURE" : "SAFE";
-        cands.push({idx,gx,gy,val,quality});
-      }
-    }
-    if(!cands.length) return null;
-    cands.sort((a,b)=>b.val-a.val);
-    return cands[0];
-  }
-
-  function setCoachText(){
-    if(!coachToggle.checked){ coachWhyEl.innerHTML="Coach is <b>off</b>."; return; }
-    if(coachAssist<=0.001){ coachWhyEl.innerHTML="Coach has faded out — you’ve got it."; return; }
-    if(!coachSuggestion){ coachWhyEl.innerHTML="No suggestion this turn."; return; }
-    const why = coachSuggestion.quality==="CAPTURE"
-      ? "This drop creates a <b>closed pocket</b>. You’ll score a capture and clear bordering blocks."
-      : "No capture here — but it keeps space open and avoids trapping yourself.";
-    coachWhyEl.innerHTML = `<div class="chip" style="display:inline-block;margin-bottom:8px">${coachSuggestion.quality==="CAPTURE"?"Capture Move":"Safe Move"}</div>
-      <div style="margin-bottom:6px">${why}</div>
-      <div>Suggested drop (top-left): <b>(${coachSuggestion.gx+1}, ${coachSuggestion.gy+1})</b>.</div>`;
-  }
-
-  function pushRecapLine(line){
-    recapLog.unshift(line);
-    while(recapLog.length>4) recapLog.pop();
-    coachRecapEl.innerHTML = recapLog.map((x,i)=>`<div style="margin-bottom:${i===recapLog.length-1?0:6}px">• ${x}</div>`).join("");
-  }
-  function resetRecap(){recapLog.length=0; coachRecapEl.textContent="Make a move to see a recap.";}
-
-  function recomputeCoach(){
-    updateCoachAssist();
-    if(coachAssist>0.001 && coachToggle.checked){
-      coachSuggestion = (Math.random()<coachAssist) ? computeCoachSuggestion() : null;
-    } else coachSuggestion=null;
-    renderPieces();
-    setCoachText();
-  }
-
-  // ===== Pieces UI =====
   function renderPieces(){
     piecesEl.innerHTML="";
     pieces.forEach((p,idx)=>{
       const slot=document.createElement("div");
       slot.className="slot"+(p.used?" used":"");
-      if(coachSuggestion && coachSuggestion.idx===idx && !p.used) slot.classList.add("reco");
-
       const mini=document.createElement("canvas");
-      mini.width=120; mini.height=80;
-      mini.style.width="100%"; mini.style.height="80px";
-      mini.style.borderRadius="12px";
-      mini.style.background="rgba(27,39,64,.22)";
-      mini.style.border="1px solid rgba(36,53,86,.6)";
+      mini.className="mini";
+      mini.width=160; mini.height=90;
       slot.appendChild(mini);
 
       const m=mini.getContext("2d");
-      const block=14, gap=4;
-      const w=p.w*block+(p.w-1)*gap;
-      const h=p.h*block+(p.h-1)*gap;
-      const ox=(mini.width-w)/2;
-      const oy=(mini.height-h)/2;
-
+      const block=16, gap=5;
+      const w=p.w*block+(p.w-1)*gap, h=p.h*block+(p.h-1)*gap;
+      const ox=(mini.width-w)/2, oy=(mini.height-h)/2;
       for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
         if(!p.shape[y][x]) continue;
-        const bx=ox+x*(block+gap);
-        const by=oy+y*(block+gap);
-        rr(m, bx,by,block,block,5);
+        rr(m, ox+x*(block+gap), oy+y*(block+gap), block, block, 6);
         m.fillStyle=p.color; m.fill();
       }
 
-      const meta=document.createElement("div");
-      meta.className="meta";
-      const chip1=document.createElement("span");
-      chip1.className="chip";
-      chip1.textContent = `${p.w}×${p.h}`;
-      meta.appendChild(chip1);
-      slot.appendChild(meta);
+      const label=document.createElement("div");
+      label.className="slotLabel";
+      label.textContent = `${p.w}×${p.h}`;
+      slot.appendChild(label);
 
       slot.addEventListener("pointerdown",(e)=>{
         if(p.used) return;
@@ -605,44 +434,12 @@
         const pt=clientToCanvas(e.clientX,e.clientY);
         dragging={piece:p, idx, x:pt.x, y:pt.y};
         hoverCell=pointerToGrid(e.clientX,e.clientY);
-        ensureAudio(); sfx.pick();
       });
 
       piecesEl.appendChild(slot);
     });
   }
 
-  function drawPieceOnGrid(piece,gx,gy,opts={}){
-    const s=cellSize();
-    const inset=opts.inset ?? 2;
-    const alpha=opts.alpha ?? 0.18;
-    const outline=opts.outline ?? 0.25;
-    const tintMul=opts.tintMul ?? 1.2;
-    for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
-      if(!piece.shape[y][x]) continue;
-      const bx=gx+x, by=gy+y;
-      if(bx<0||by<0||bx>=GRID||by>=GRID) continue;
-      const {px,py}=cellToPx(bx,by);
-      rr(ctx, px+inset,py+inset,s-inset*2,s-inset*2,9);
-      ctx.fillStyle="rgba(255,255,255,"+alpha+")"; ctx.fill();
-      rr(ctx, px+inset,py+inset,s-inset*2,s-inset*2,9);
-      ctx.fillStyle=hexToRgba(piece.color, alpha*tintMul); ctx.fill();
-      if(outline>0){
-        rr(ctx, px+inset,py+inset,s-inset*2,s-inset*2,9);
-        ctx.strokeStyle="rgba(255,255,255,"+outline+")";
-        ctx.lineWidth=2; ctx.stroke();
-      }
-    }
-  }
-
-  function anyMoveAvailable(){
-    const active=pieces.filter(p=>!p.used);
-    if(active.length===0) return true;
-    for(const p of active) for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++) if(canPlace(p,x,y)) return true;
-    return false;
-  }
-
-  // ===== Input =====
   canvas.addEventListener("pointermove",(e)=>{
     if(!dragging) return;
     const pt=clientToCanvas(e.clientX,e.clientY);
@@ -651,261 +448,133 @@
   });
 
   canvas.addEventListener("pointerup",(e)=>{
+    if(gameOver) return;
     if(!dragging) return;
     const p=dragging.piece;
     const drop=pointerToGrid(e.clientX,e.clientY);
     if(!drop || !canPlace(p,drop.x,drop.y)){
-      sfx.bad(); dragging=null; hoverCell=null; return;
+      dragging=null; hoverCell=null; return;
     }
 
-    // Save for undo
-    undoStack.push({board:copyBoard(board), pieces:deepClone(pieces), score,best,turn,heat,combo,comboMult,coachAssist});
-    if(undoStack.length>UNDO_LIMIT) undoStack.shift();
-    btnUndo.disabled = (undoStack.length===0) || (undoBudget<=0);
-
-
-    // Place piece (gray absorbs)
-    const placed = placePiece(p,drop.x,drop.y);
-    const effectiveBlocks = placed.effective;
-    const formed = tickBlackSeedsFlagged();
-    if(formed.length){
-      edgeFlashes.push({cells:formed, t0:now()});
-      toastShow("EDGE LOCKED", `+${formed.length} wall${formed.length===1?"":"s"}`);
-      pushRecapLine(`<b>Edge locked</b> → ${formed.length} wall${formed.length===1?"":"s"} formed`);
-      sfx.edge();
-    }
+    const effective = placePiece(p, drop.x, drop.y);
     p.used=true;
-    sfx.place();
 
-    // Score: only blocks that actually became colored blocks
-    score += effectiveBlocks*6;
+    score += effective*6;
+    tickBlackSeedsFlagged();
 
-    const cap=applyCapture();
+    const cap=capture();
     if(cap.cleared>0){
-      combo += 1;
-      comboMult = Math.min(Math.max(1, combo), 6);
-
-      const basePts = cap.cleared*26 + cap.interior*3;
-      const comboBonus = (comboMult-1) * (cap.cleared*14 + 20);
-      const pts = Math.round(basePts*comboMult + comboBonus);
-
+      const pts = Math.round(cap.cleared*26 + cap.interior*3);
       score += pts;
-      sfx.cap();
-      toastShow(`CAPTURE!  x${comboMult}`, `+${pts}  (cleared ${cap.cleared})`);
-      pushRecapLine(`<b>Captured</b> ${cap.interior} space → cleared <b>${cap.cleared}</b> blocks → <b>x${comboMult}</b> combo (+${pts})`);
-    } else {
-      if(combo>0){ pushRecapLine(`<b>No capture</b> → combo reset (was x${comboMult})`); }
-      combo = 0; comboMult = 1;
-      pushRecapLine(`<b>Placed</b> ${effectiveBlocks} blocks → no capture`);
     }
 
-    heat=clamp(1.0 + (countFilled()/90), 1.0, 2.5);
-    turn++;
+    if(pieces.every(pp=>pp.used)) rollPieces(); else renderPieces();
 
-    if(pieces.every(pp=>pp.used)) rollPieces(); else recomputeCoach();
-    if(score>best){best=score; localStorage.setItem("echo_grid_best_gray_black_walls",String(best));}
+    if(score>best){best=score; localStorage.setItem("echo_grid_best_minimal", String(best));}
     updateHUD();
 
+    // game over check
+    if(!anyMoveAvailable()){
+      setGameOver(true);
+    }
+
     dragging=null; hoverCell=null;
-    if(!anyMoveAvailable()){overlay.style.display="flex"; sfx.bad();}
   });
 
   canvas.addEventListener("lostpointercapture",()=>{dragging=null; hoverCell=null;});
 
-  function updateHUD(){
-    scoreEl.textContent=score;
-    bestEl.textContent=best;
-    heatEl.textContent=heat.toFixed(2);
-    comboEl.textContent="x"+comboMult;
-    if(undosLeftEl) undosLeftEl.textContent=String(undoBudget);
-    btnUndo.disabled = (undoStack.length===0) || (undoBudget<=0);
-    btnUndo.textContent = undoBudget>0 ? `Undo (${undoBudget})` : 'Undo (0)';
-  }
+  if(restartBtn){ restartBtn.addEventListener("click", ()=>{ newGame(); }); }
 
-  function restoreUndo(){
-    if(undoStack.length===0) return;
-    if(undoBudget<=0) return;
-    undoBudget -= 1;
-    const st = undoStack.pop();
-    board=copyBoard(st.board);
-    pieces=deepClone(st.pieces);
-    score=st.score; best=st.best; turn=st.turn; heat=st.heat;
-    combo=st.combo ?? 0; comboMult=st.comboMult ?? 1;
-    coachAssist=st.coachAssist ?? 1.0;
-    overlay.style.display="none";
-    btnUndo.disabled = (undoStack.length===0) || (undoBudget<=0);
-    resetRecap(); pushRecapLine(`<b>Undo</b> restored the previous move.`);
-    renderPieces(); recomputeCoach(); updateHUD();
-  }
-
-  function seedRandomCells(){
-    // seed some colored
-    const seed=4+randInt(4);
+  function seed(){
+    const seed=4+Math.floor(Math.random()*4);
     for(let i=0;i<seed;i++){
-      const x=randInt(GRID), y=randInt(GRID);
-      if(isEmpty(board[y][x])) board[y][x]={t:'c', color: COLORS[randInt(COLORS.length)]};
+      const x=Math.floor(Math.random()*GRID), y=Math.floor(Math.random()*GRID);
+      if(isEmpty(board[y][x])) board[y][x]={t:'c', color: COLORS[Math.floor(Math.random()*COLORS.length)]};
     }
-    // seed grays
     let placed=0, tries=0;
     while(placed<GRAY_COUNT && tries<1000){
       tries++;
-      const x=randInt(GRID), y=randInt(GRID);
-      if(isEmpty(board[y][x])){
-        board[y][x]={t:'g', uses: GRAY_START_USES};
-        placed++;
+      const x=Math.floor(Math.random()*GRID), y=Math.floor(Math.random()*GRID);
+      if(isEmpty(board[y][x])){ board[y][x]={t:'g', uses: GRAY_START_USES}; placed++; }
+    }
+  }
+
+  function drawPieceGhost(p,gx,gy,ok){
+    const s=cellSize();
+    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+      if(!p.shape[y][x]) continue;
+      const bx=gx+x, by=gy+y;
+      if(bx<0||by<0||bx>=GRID||by>=GRID) continue;
+      const {px,py}=cellToPx(bx,by);
+      rr(ctx, px+2,py+2,s-4,s-4,10);
+      ctx.fillStyle=hexToRgba(p.color, ok?0.25:0.10);
+      ctx.fill();
+      if(ok){
+        rr(ctx, px+2,py+2,s-4,s-4,10);
+        ctx.strokeStyle="rgba(255,255,255,.22)";
+        ctx.lineWidth=2;
+        ctx.stroke();
       }
     }
   }
 
-  function newGame(){
-    board=emptyBoard();
-    score=0; turn=0; heat=1.0; combo=0; comboMult=1; coachAssist=1.0; coachSuggestion=null;
-    overlay.style.display="none";
-    undoStack.length=0; undoBudget=10; btnUndo.disabled=true; btnUndo.textContent='Undo (10)';
-    flashes.length=0; edgeFlashes.length=0;
-    resetRecap();
-    coachToggle.disabled=false; coachToggle.checked=true;
-
-    seedRandomCells();
-    rollPieces(); updateHUD();
-  }
-
-  btnNew.addEventListener("click", newGame);
-  btnAgain.addEventListener("click", newGame);
-  btnUndo.addEventListener("click", restoreUndo);
-  coachToggle.addEventListener("change", ()=>recomputeCoach());
-
-  // ===== Rendering =====
   function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     const s=cellSize();
-    const t=now();
 
-    // grid + blocks
     for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
       const {px,py}=cellToPx(x,y);
-      rr(ctx, px,py,s,s,10);
+      rr(ctx, px,py,s,s,12);
       ctx.fillStyle="rgba(27,39,64,.62)"; ctx.fill();
       ctx.strokeStyle="rgba(255,255,255,.14)"; ctx.lineWidth=1; ctx.stroke();
 
       const v=board[y][x];
       if(!v) continue;
 
-      rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,9);
+      rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,11);
 
       if(isColor(v)){
-        ctx.fillStyle=v.color;
-        ctx.fill();
+        ctx.fillStyle=v.color; ctx.fill();
       } else if(isGray(v)){
-        ctx.fillStyle="rgba(170,180,200,.75)";
-        ctx.fill();
+        ctx.fillStyle="rgba(170,180,200,.75)"; ctx.fill();
         ctx.fillStyle="rgba(10,14,22,.85)";
         ctx.font=`900 ${Math.floor(s*0.38)}px system-ui`;
         ctx.textAlign="center"; ctx.textBaseline="middle";
         ctx.fillText(String(v.uses), px+s/2, py+s/2);
-      } else if(isBlackSeed(v)){
-        ctx.fillStyle="rgba(12,12,14,.92)";
-        ctx.fill();
+      } else if(isBlack(v)){
+        ctx.fillStyle="rgba(12,12,14,.92)"; ctx.fill();
         ctx.fillStyle="rgba(255,255,255,.78)";
         ctx.font=`900 ${Math.floor(s*0.36)}px system-ui`;
         ctx.textAlign="center"; ctx.textBaseline="middle";
         ctx.fillText(String(v.ttl), px+s/2, py+s/2);
       } else if(isWall(v)){
-        ctx.fillStyle="rgba(0,0,0,.96)";
-        ctx.fill();
-        rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,9);
+        ctx.fillStyle="rgba(0,0,0,.96)"; ctx.fill();
+        rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,11);
         ctx.strokeStyle="rgba(255,255,255,.10)";
-        ctx.lineWidth=2;
-        ctx.stroke();
+        ctx.lineWidth=2; ctx.stroke();
       }
     }
 
-    // coach preview + flags
-    if(coachToggle.checked && coachSuggestion && coachAssist>0.001){
-      const p=pieces[coachSuggestion.idx];
-      if(p && !p.used){
-        const pulse=0.55+0.45*Math.sin(t/160);
-        const alpha=(coachSuggestion.quality==="CAPTURE"?0.17:0.12)*coachAssist*pulse;
-        const outline=(coachSuggestion.quality==="CAPTURE"?0.38:0.20)*coachAssist*pulse;
-        drawPieceOnGrid(p, coachSuggestion.gx, coachSuggestion.gy, {alpha, outline, inset:2, tintMul:0.9});
-        const pockets = pocketsIfPlaced(p, coachSuggestion.gx, coachSuggestion.gy);
-        drawFlagsForPockets(pockets);
-      }
-    }
-
-    // sticky hover ghost + flags
     if(dragging && hoverCell){
       const p=dragging.piece;
       const ok=canPlace(p,hoverCell.x,hoverCell.y);
-      drawPieceOnGrid(p, hoverCell.x, hoverCell.y, {alpha: ok?0.18:0.10, outline: ok?0.30:0.0, inset:2, tintMul:1.25});
-      if(ok){
-        const pockets = pocketsIfPlaced(p, hoverCell.x, hoverCell.y);
-        drawFlagsForPockets(pockets);
-      }
+      drawPieceGhost(p,hoverCell.x,hoverCell.y,ok);
     }
 
-    // flash effect for cleared border blocks
-    for(let i=flashes.length-1;i>=0;i--){
-      const f=flashes[i]; const dt=t-f.t0, life=210;
-      if(dt>life){flashes.splice(i,1); continue;}
-      const a=0.30*(1-dt/life);
-      for(const c of f.cells){
-        const {px,py}=cellToPx(c.x,c.y);
-        rr(ctx, px+1.5,py+1.5,s-3,s-3,9);
-        ctx.fillStyle=`rgba(255,255,255,${a})`; ctx.fill();
-      }
-    }
-
-    // edge lock pulse
-    for(let i=edgeFlashes.length-1;i>=0;i--){
-      const f=edgeFlashes[i]; const dt=t-f.t0, life=520;
-      if(dt>life){edgeFlashes.splice(i,1); continue;}
-      const a=0.28*(1-dt/life);
-      for(const c of f.cells){
-        const {px,py}=cellToPx(c.x,c.y);
-        rr(ctx, px+1.0,py+1.0,s-2,s-2,10);
-        ctx.strokeStyle=`rgba(140,200,255,${a})`;
-        ctx.lineWidth=3;
-        ctx.stroke();
-      }
-    }
-
-    // finger-follow piece
     if(dragging){
       const p=dragging.piece;
       const px=dragging.x, py=dragging.y;
       const block=Math.min(30, s*0.62);
       const gap=4;
-      const w=p.w*block+(p.w-1)*gap;
-      const h=p.h*block+(p.h-1)*gap;
+      const w=p.w*block+(p.w-1)*gap, h=p.h*block+(p.h-1)*gap;
       const ox=px-w/2, oy=py-h/2;
       for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
         if(!p.shape[y][x]) continue;
-        const bx=ox+x*(block+gap), by=oy+y*(block+gap);
-        rr(ctx, bx,by,block,block,7);
+        rr(ctx, ox+x*(block+gap), oy+y*(block+gap), block, block, 8);
         ctx.fillStyle=p.color; ctx.fill();
         ctx.strokeStyle="rgba(255,255,255,.10)"; ctx.lineWidth=1; ctx.stroke();
       }
     }
-  }
-
-  function drawFallbackGrid(msg){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    const inner=canvas.width-PAD*2;
-    const s=(inner-GAP*(GRID-1))/GRID;
-    for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
-      const px=PAD+x*(s+GAP), py=PAD+y*(s+GAP);
-      rr(ctx, px,py,s,s,10);
-      ctx.fillStyle="rgba(27,39,64,.62)"; ctx.fill();
-      ctx.strokeStyle="rgba(255,255,255,.18)"; ctx.lineWidth=1; ctx.stroke();
-    }
-    ctx.fillStyle="rgba(255,170,170,.92)";
-    ctx.font="800 14px system-ui";
-    ctx.fillText("Render error:", 22, 28);
-    ctx.fillStyle="rgba(255,210,210,.85)";
-    ctx.font="12px system-ui";
-    const lines=String(msg||"unknown").split("\n").slice(0,6);
-    lines.forEach((ln,i)=>ctx.fillText(ln, 22, 48+i*16));
   }
 
   function tick(){
@@ -914,13 +583,24 @@
       errEl.style.display="none";
     }catch(e){
       errEl.style.display="block";
-      errEl.textContent="Error (so your board doesn't go blank):\n"+(e && e.stack ? e.stack : String(e));
-      drawFallbackGrid(e && e.message ? e.message : String(e));
+      errEl.textContent = (e && e.stack) ? e.stack : String(e);
     }
     requestAnimationFrame(tick);
   }
 
-  best = Number(localStorage.getItem("echo_grid_best_gray_black_walls")||"0") || 0;
+  function newGame(){
+    setGameOver(false);
+    board=emptyBoard();
+    score=0;
+    seed();
+    rollPieces();
+    updateHUD();
+    // If somehow no moves from the start, re-roll a few times.
+    for(let i=0;i<5 && !anyMoveAvailable();i++) rollPieces();
+    if(!anyMoveAvailable()) setGameOver(true);
+  }
+
+  best = Number(localStorage.getItem("echo_grid_best_minimal")||"0") || 0;
   newGame();
   requestAnimationFrame(tick);
 })();
