@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <meta name="theme-color" content="#2b0b4a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
 <title>Echo Grid (Minimal)</title>
 <style>
   :root{
@@ -125,6 +130,34 @@ body, .boardCard, .piecesCard, .slot, .mini, canvas#c { touch-action: none; }
     transition:box-shadow .18s ease-out;
   }
 
+
+  /* Accessibility helpers */
+  .sr-only{
+    position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
+    overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+  }
+  :focus-visible{ outline:3px solid rgba(255,215,90,.95); outline-offset:4px; }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms!important; animation-iteration-count:1!important; transition-duration:0.001ms!important; scroll-behavior:auto!important; }
+    .sparkle, .burst, .glowPulse{ display:none!important; }
+  }
+
+  /* Mobile friendliness: stop the page from scrolling while dragging */
+  .boardCard, #c, .piecesCard, .piecesRow, .pieceCard, .pieceCanvas{
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Respect device safe-areas (notches/home indicator) */
+  .app{
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
 </style>
 <style>
 /* --- Layout override: scores top, board center, blocks bottom, FULLSCREEN --- */
@@ -157,27 +190,56 @@ body {
 .piecesRow {
   justify-content: center !important;
 }
+
+  /* Accessibility helpers */
+  .sr-only{
+    position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
+    overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+  }
+  :focus-visible{ outline:3px solid rgba(255,215,90,.95); outline-offset:4px; }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms!important; animation-iteration-count:1!important; transition-duration:0.001ms!important; scroll-behavior:auto!important; }
+    .sparkle, .burst, .glowPulse{ display:none!important; }
+  }
+
+  /* Mobile friendliness: stop the page from scrolling while dragging */
+  .boardCard, #c, .piecesCard, .piecesRow, .pieceCard, .pieceCanvas{
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Respect device safe-areas (notches/home indicator) */
+  .app{
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
 </style>
 </head>
 <body>
-  <div class="app">
+  <div class="app" role="application" aria-label="Block puzzle game">
+    <p id="instructions" class="sr-only">Drag a piece from the bottom tray onto the board. A shadow shows where it will land. Release to place it. Clear full rows or columns to score.</p>
     <div class="hud">
-      <div class="pill"><span>Score</span><b id="score">0</b></div>
-      <div class="pill"><span>Top</span><b id="best">0</b></div>
+      <div class="pill"><span>Score</span><b id="score" aria-live="polite">0</b></div>
+      <div class="pill"><span>Top</span><b id="best" aria-live="polite">0</b></div>
     </div>
 
     <div id="banner" style="display:none;margin:10px 0;padding:10px 12px;border-radius:14px;
       background:rgba(20,32,58,.55);border:1px solid rgba(255,255,255,.12);width:100%;">
       <b id="bannerTitle">Game Over</b>
       <div id="bannerText" style="color:var(--muted);margin-top:4px;">No legal placements remain.</div>
-      <button id="restartBtn" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:12px;
+      <button id="restartBtn" aria-label="Start a new game" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:12px;
         border:1px solid rgba(255,255,255,.12);background:rgba(27,39,64,.35);color:var(--txt);font-weight:800;cursor:pointer;">
         New Game
       </button>
     </div>
 
     <div class="boardCard">
-      <canvas id="c" width="680" height="680"></canvas>
+      <canvas id="c" width="680" height="680" tabindex="0" aria-label="Game board" aria-describedby="instructions"></canvas>
     </div>
 
     <div class="piecesCard">
@@ -305,7 +367,7 @@ body {
   }
   
   const isSmallScreen = (Math.min(window.innerWidth||9999, window.innerHeight||9999) < 900);
-  const SHADOW_BLOCKS = 8; // shadow stays 8 blocks above
+  const SHADOW_BLOCKS = 6; // shadow stays 8 blocks above
   const shadowOffsetPx = () => (cellSize() + GAP) * SHADOW_BLOCKS;
 function pointerToGrid(clientX,clientY){
     const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
