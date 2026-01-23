@@ -367,7 +367,7 @@ body {
   }
   
   const isSmallScreen = (Math.min(window.innerWidth||9999, window.innerHeight||9999) < 900);
-  const SHADOW_BLOCKS = 8; // shadow stays 8 blocks above
+  const SHADOW_BLOCKS = 6; // shadow stays 8 blocks above
   const shadowOffsetPx = () => (cellSize() + GAP) * SHADOW_BLOCKS;
 function pointerToGrid(clientX,clientY){
     const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
