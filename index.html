@@ -305,8 +305,8 @@ body {
   }
   
   const isSmallScreen = (Math.min(window.innerWidth||9999, window.innerHeight||9999) < 900);
-  const SHADOW_OFFSET = isSmallScreen ? 80 : 50;
-
+  const SHADOW_BLOCKS = 8; // shadow stays 8 blocks above
+  const shadowOffsetPx = () => (cellSize() + GAP) * SHADOW_BLOCKS;
 function pointerToGrid(clientX,clientY){
     const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
     const x=(clientX-r.left)*sx, y=(clientY-r.top)*sy;
@@ -521,7 +521,7 @@ function pointerToGrid(clientX,clientY){
     if(activePointerId!==null && e.pointerId!==activePointerId) return;
     const pt=clientToCanvas(e.clientX,e.clientY);
     dragging.x=pt.x; dragging.y=pt.y;
-    hoverCell=pointerToGrid(e.clientX,e.clientY - SHADOW_OFFSET);
+    hoverCell=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx());
     if(e.cancelable) e.preventDefault();
   }
 
@@ -530,7 +530,7 @@ function pointerToGrid(clientX,clientY){
     if(activePointerId!==null && e.pointerId!==activePointerId) return;
 
     const p=dragging.piece;
-    const drop=pointerToGrid(e.clientX,e.clientY - SHADOW_OFFSET);
+    const drop=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx());
     if(!drop || !canPlace(p,drop.x,drop.y)){
       dragging=null; hoverCell=null; activePointerId=null;
       if(e.cancelable) e.preventDefault();
@@ -599,7 +599,7 @@ function pointerToGrid(clientX,clientY){
     if(!t) return;
     const pt=clientToCanvas(t.clientX,t.clientY);
     dragging.x=pt.x; dragging.y=pt.y;
-    hoverCell=pointerToGrid(t.clientX,t.clientY - SHADOW_OFFSET);
+    hoverCell=pointerToGrid(t.clientX,t.clientY - shadowOffsetPx());
     if(e.cancelable) e.preventDefault();
   }
 
@@ -628,7 +628,7 @@ function pointerToGrid(clientX,clientY){
         try{ slot.setPointerCapture(e.pointerId); }catch(err){}
         const pt=clientToCanvas(e.clientX,e.clientY);
         dragging={piece:p, idx, x:pt.x, y:pt.y};
-        hoverCell=pointerToGrid(e.clientX,e.clientY - SHADOW_OFFSET);
+        hoverCell=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx());
         if(e.cancelable) e.preventDefault();
       });
 
@@ -638,7 +638,7 @@ function pointerToGrid(clientX,clientY){
         activeTouchId=t.identifier;
         const pt=clientToCanvas(t.clientX,t.clientY);
         dragging={piece:p, idx, x:pt.x, y:pt.y};
-        hoverCell=pointerToGrid(t.clientX,t.clientY - SHADOW_OFFSET);        if(e.cancelable) e.preventDefault();
+        hoverCell=pointerToGrid(t.clientX,t.clientY - shadowOffsetPx());        if(e.cancelable) e.preventDefault();
       }, {passive:false});
 
       piecesEl.appendChild(slot);
