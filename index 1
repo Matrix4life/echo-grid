@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Echo Grid (Minimal)</title>
+<style>
+  :root{
+    --bg1:#0b1020; --bg2:#111c33; --card:rgba(18,28,52,.72);
+    --stroke:rgba(255,255,255,.12); --txt:#e8eefc; --muted:#97a7c6;
+  }
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  body{
+  overflow:hidden;
+  margin:0;
+  min-height:100vh;
+  background:radial-gradient(1400px 900px at 20% 0%, #3b0764, #020617 55%),
+            radial-gradient(1200px 900px at 80% 100%, #064e3b, transparent 60%);
+  color:var(--txt);
+  display:flex;
+  justify-content:center;   /* center horizontally */
+  align-items:flex-start;   /* stick UI to the top */
+  padding:0;     /* no outer padding, use full screen */
+}
+  .app{width:100vw; max-width:100vw;}
+  .hud{
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .pill{
+    background:radial-gradient(circle at 30% 20%, #facc15, #a16207);
+    border:1px solid rgba(255,255,255,.45);
+    border-radius:999px;
+    padding:8px 12px;
+    font-weight:700;
+    display:flex; gap:10px; align-items:center;
+  }
+  .pill span{color:var(--muted); font-weight:700}
+  .boardCard, .piecesCard{
+    background:linear-gradient(145deg, rgba(18,28,52,.96), rgba(6,12,30,.96));
+    border:1px solid rgba(250,204,21,.22);
+    border-radius:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .boardCard{padding:4px;}
+  canvas#c{
+    display:block;
+    width:calc(100vw - 8px);
+    height:calc(100vw - 8px);
+    max-width:600px; max-height:600px;
+    border-radius:14px;
+    background:radial-gradient(circle at 50% 20%, rgba(250,204,21,.08), transparent 55%),
+               linear-gradient(180deg, rgba(22,30,52,.95), rgba(5,10,24,.98));
+    border:1px solid rgba(36,53,86,.80);
+    touch-action:none;
+    margin:0 auto;
+  }
+  .piecesCard{margin-top:2px; padding:4px;}
+  .piecesRow{
+    display:flex; gap:10px; justify-content:space-between;
+  }
+  .slot{
+    flex:1;
+    border-radius:14px;
+    border:1px solid rgba(36,53,86,.80);
+    background:rgba(27,39,64,.22);
+    padding:8px;
+    position:relative;
+    min-width:0;
+  }
+  .slot.used{opacity:.35; filter:saturate(.6);}
+  .slotLabel{
+    margin-top:6px;
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
+    font-weight:800;
+    letter-spacing:.2px;
+  }
+  .mini{
+    width:100%; height:76px;
+    border-radius:12px;
+    display:block;
+    background:rgba(27,39,64,.22);
+  }
+  #err{
+    margin-top:10px;
+    white-space:pre-wrap;
+    color:#ffd0d0;
+    background:rgba(120,20,20,.22);
+    border:1px solid rgba(255,120,120,.25);
+    padding:10px;
+    border-radius:12px;
+    display:none;
+  }
+
+/* === Mobile drag fixes === */
+body, .boardCard, .piecesCard, .slot, .mini, canvas#c { touch-action: none; }
+.piecesCard { -webkit-user-select:none; user-select:none; }
+.slot { cursor: grab; }
+.slot:active { cursor: grabbing; }
+
+
+  @keyframes casinoGlow {
+    0% { box-shadow:0 0 10px rgba(250,204,21,.25), 0 0 30px rgba(250,204,21,.18); }
+    50% { box-shadow:0 0 18px rgba(250,204,21,.40), 0 0 42px rgba(250,250,210,.30); }
+    100% { box-shadow:0 0 10px rgba(250,204,21,.25), 0 0 30px rgba(250,204,21,.18); }
+  }
+  .boardCard{
+    animation:casinoGlow 4.5s ease-in-out infinite;
+  }
+  .pill{
+    position:relative;
+    overflow:hidden;
+  }
+  .pill::after{
+    content:""; position:absolute; inset:-40%;
+    background:radial-gradient(circle at 10% 0%, rgba(255,255,255,.24), transparent 55%);
+    opacity:.6; mix-blend-mode:screen;
+  }
+
+
+  .flash-win .boardCard{
+    box-shadow:0 0 30px rgba(250,250,210,.75), 0 0 80px rgba(250,204,21,.85);
+    transition:box-shadow .18s ease-out;
+  }
+
+</style>
+<style>
+/* --- Layout override: scores top, board center, blocks bottom, FULLSCREEN --- */
+body {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+.app {
+  /* Full width on any phone, no side gutters */
+  width: 100vw;
+  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hud {
+  width: 100%;
+  justify-content: center !important;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.boardCard {
+  width: 100%;
+}
+.piecesCard {
+  width: 100%;
+  margin-top: 4px !important;
+}
+.piecesRow {
+  justify-content: center !important;
+}
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="hud">
+      <div class="pill"><span>Score</span><b id="score">0</b></div>
+      <div class="pill"><span>Top</span><b id="best">0</b></div>
+    </div>
+
+    <div id="banner" style="display:none;margin:10px 0;padding:10px 12px;border-radius:14px;
+      background:rgba(20,32,58,.55);border:1px solid rgba(255,255,255,.12);width:100%;">
+      <b id="bannerTitle">Game Over</b>
+      <div id="bannerText" style="color:var(--muted);margin-top:4px;">No legal placements remain.</div>
+      <button id="restartBtn" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:12px;
+        border:1px solid rgba(255,255,255,.12);background:rgba(27,39,64,.35);color:var(--txt);font-weight:800;cursor:pointer;">
+        New Game
+      </button>
+    </div>
+
+    <div class="boardCard">
+      <canvas id="c" width="680" height="680"></canvas>
+    </div>
+
+    <div class="piecesCard">
+      <div class="piecesRow" id="pieces"></div>
+    </div>
+
+    <div id="err"></div>
+  </div>
+
+
+<script>
+(() => {
+  const GRID=8;
+  let PAD=18, GAP=4, N=680, CELL=0;
+  const canvas=document.getElementById("c");
+  const ctx=canvas.getContext("2d");
+  const errEl=document.getElementById("err");
+  const scoreEl=document.getElementById("score");
+  const bestEl=document.getElementById("best");
+  const piecesEl=document.getElementById("pieces");
+
+  // Special tiles
+  const GRAY_START_USES = 4;
+  const GRAY_COUNT = 4;
+  const BLACK_TO_WALL_TURNS = 3;
+
+  // Cell types:
+  // null empty
+  // {t:'c', color:'#hex'} colored
+  // {t:'g', uses:n} gray countdown
+  // {t:'b', ttl:n} black seed countdown -> wall
+  // {t:'w'} wall
+  const isEmpty=v=>v==null;
+  const isGray=v=>v&&v.t==='g';
+  const isBlack=v=>v&&v.t==='b';
+  const isWall=v=>v&&v.t==='w';
+  const isColor=v=>v&&v.t==='c';
+  const isPlaceable=v=>isEmpty(v)||isGray(v);
+
+  const COLORS=["#6ee7ff","#a78bfa","#fb7185","#34d399","#fbbf24","#60a5fa","#f472b6","#22c55e","#f97316"];
+  const SHAPES=[
+    [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]],
+    [[1,1,1,1]], [[1],[1],[1],[1]], [[1,1],[1,1]],
+    [[1,0],[1,0],[1,1]], [[0,1],[0,1],[1,1]],
+    [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]],
+    [[1,1,1],[1,0,0]], [[1,1,1],[0,0,1]],
+  ];
+
+  let board=null;
+  let pieces=[];
+  let score=0, best=0;
+
+  // input
+  let dragging=null; // {piece, idx, x,y}
+  let hoverCell=null;
+
+  function rr(c,x,y,w,h,r){
+    r=Math.max(0, Math.min(r, Math.min(w,h)/2));
+    c.beginPath();
+    c.moveTo(x+r,y);
+    c.arcTo(x+w,y,x+w,y+h,r);
+    c.arcTo(x+w,y+h,x,y+h,r);
+    c.arcTo(x,y+h,x,y,r);
+    c.arcTo(x,y,x+w,y,r);
+    c.closePath();
+  }
+  function hexToRgba(hex,a){
+    const h=hex.replace("#","");
+    const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function clamp01(t){ return Math.max(0, Math.min(1, t)); }
+  function shade(hex, amt){ // amt: -1..1
+    hex = (hex||"#000").replace("#","");
+    if(hex.length===3) hex = hex.split("").map(c=>c+c).join("");
+    const num=parseInt(hex,16);
+    let r=(num>>16)&255, g=(num>>8)&255, b=num&255;
+    const f = (x)=>Math.max(0,Math.min(255, Math.round(x + 255*amt)));
+    r=f(r); g=f(g); b=f(b);
+    return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+  }
+
+  function drawBevelBlock(ctx,x,y,w,h,color,round=10){
+    // Base body
+    rr(ctx,x,y,w,h,round);
+    const g=ctx.createLinearGradient(x,y,x+w,y+h);
+    g.addColorStop(0, shade(color, 0.28));
+    g.addColorStop(0.45, shade(color, 0.08));
+    g.addColorStop(1, shade(color,-0.18));
+    ctx.fillStyle=g; ctx.fill();
+
+    // Inner face
+    const pad=Math.max(2, w*0.08);
+    rr(ctx, x+pad, y+pad, w-2*pad, h-2*pad, Math.max(6, round-3));
+    const g2=ctx.createLinearGradient(x+pad,y+pad,x+w-pad,y+h-pad);
+    g2.addColorStop(0, shade(color, 0.32));
+    g2.addColorStop(1, shade(color,-0.05));
+    ctx.fillStyle=g2; ctx.fill();
+
+    // Specular highlight (top-left sweep)
+    ctx.save();
+    ctx.globalAlpha=0.38;
+    rr(ctx, x+pad*0.7, y+pad*0.6, (w-2*pad)*0.9, (h-2*pad)*0.45, Math.max(5, round-5));
+    ctx.fillStyle="#ffffff";
+    ctx.fill();
+    ctx.restore();
+
+    // Edge strokes (gold-ish outer glow)
+    ctx.strokeStyle="rgba(250,204,21,.55)"; ctx.lineWidth=1.6;
+    rr(ctx,x+0.8,y+0.8,w-1.6,h-1.6,round); ctx.stroke();
+
+    ctx.strokeStyle="rgba(0,0,0,.35)"; ctx.lineWidth=2;
+    rr(ctx,x+2, y+2, w-4, h-4, round-1); ctx.stroke();
+  }
+
+  function emptyBoard(){return Array.from({length:GRID},()=>Array(GRID).fill(null));}
+
+  function cellSize(){const inner=canvas.width-PAD*2; return (inner-GAP*(GRID-1))/GRID;}
+  function cellToPx(x,y){const s = cellSize()*0.90; return {px:PAD+x*(s+GAP), py:PAD+y*(s+GAP), s};}
+  function getRect(){return canvas.getBoundingClientRect();}
+  function clientToCanvas(clientX,clientY){
+    const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
+    return {x:(clientX-r.left)*sx, y:(clientY-r.top)*sy};
+  }
+  
+  const isSmallScreen = (Math.min(window.innerWidth||9999, window.innerHeight||9999) < 900);
+  const SHADOW_OFFSET = isSmallScreen ? 80 : 50;
+
+function pointerToGrid(clientX,clientY){
+    const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
+    const x=(clientX-r.left)*sx, y=(clientY-r.top)*sy;
+    const s=cellSize();
+    const gx=Math.floor((x-PAD+GAP/2)/(s+GAP));
+    const gy=Math.floor((y-PAD+GAP/2)/(s+GAP));
+    const inside=(x>=PAD && y>=PAD && x<=canvas.width-PAD && y<=canvas.height-PAD);
+    if(!inside) return null;
+    if(gx<0||gy<0||gx>=GRID||gy>=GRID) return null;
+    return {x:gx,y:gy};
+  }
+
+  function newPiece(){
+    const shape=SHAPES[Math.floor(Math.random()*SHAPES.length)];
+    const color=COLORS[Math.floor(Math.random()*COLORS.length)];
+    return {shape, h:shape.length, w:shape[0].length, color, used:false};
+  }
+  function rollPieces(){ pieces=[newPiece(),newPiece(),newPiece()]; renderPieces(); }
+
+  function canPlace(p,gx,gy){
+    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+      if(!p.shape[y][x]) continue;
+      const bx=gx+x, by=gy+y;
+      if(bx<0||by<0||bx>=GRID||by>=GRID) return false;
+      if(!isPlaceable(board[by][bx])) return false;
+    }
+    return true;
+  }
+
+  function placePiece(p,gx,gy){
+    let effective=0;
+    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+      if(!p.shape[y][x]) continue;
+      const bx=gx+x, by=gy+y;
+      const cur=board[by][bx];
+      if(isGray(cur)){
+        const next=(cur.uses|0)-1;
+        if(next>0) board[by][bx]={t:'g', uses: next};
+        else board[by][bx]={t:'b', ttl: BLACK_TO_WALL_TURNS};
+      } else {
+        board[by][bx]={t:'c', color:p.color};
+        effective++;
+      }
+    }
+    return effective;
+  }
+
+  // pockets: empties NOT connected to edge (walls behave like edge)
+  function pocketsOnBoard(b){
+    const visited=Array.from({length:GRID},()=>Array(GRID).fill(false));
+    const q=[];
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+
+    for(let i=0;i<GRID;i++){
+      if(isEmpty(b[0][i])){visited[0][i]=true;q.push([i,0]);}
+      if(isEmpty(b[GRID-1][i])){visited[GRID-1][i]=true;q.push([i,GRID-1]);}
+      if(isEmpty(b[i][0])){visited[i][0]=true;q.push([0,i]);}
+      if(isEmpty(b[i][GRID-1])){visited[i][GRID-1]=true;q.push([GRID-1,i]);}
+    }
+
+    for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
+      if(!isWall(b[y][x])) continue;
+      for(const [dx,dy] of dirs){
+        const nx=x+dx, ny=y+dy;
+        if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+        if(visited[ny][nx]) continue;
+        if(!isEmpty(b[ny][nx])) continue;
+        visited[ny][nx]=true; q.push([nx,ny]);
+      }
+    }
+
+    while(q.length){
+      const [x,y]=q.shift();
+      for(const [dx,dy] of dirs){
+        const nx=x+dx, ny=y+dy;
+        if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+        if(visited[ny][nx]) continue;
+        if(!isEmpty(b[ny][nx])) continue;
+        visited[ny][nx]=true; q.push([nx,ny]);
+      }
+    }
+
+    const pockets=[];
+    const seen=Array.from({length:GRID},()=>Array(GRID).fill(false));
+    for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
+      if(isEmpty(b[y][x]) && !visited[y][x] && !seen[y][x]){
+        const stack=[[x,y]]; seen[y][x]=true;
+        const cells=[];
+        while(stack.length){
+          const [cx,cy]=stack.pop();
+          cells.push({x:cx,y:cy});
+          for(const [dx,dy] of dirs){
+            const nx=cx+dx, ny=cy+dy;
+            if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+            if(seen[ny][nx]) continue;
+            if(!isEmpty(b[ny][nx])) continue;
+            if(visited[ny][nx]) continue;
+            seen[ny][nx]=true; stack.push([nx,ny]);
+          }
+        }
+        pockets.push(cells);
+      }
+    }
+    return pockets;
+  }
+
+  function tickBlackSeedsFlagged(){
+    const pockets=pocketsOnBoard(board);
+    if(!pockets.length) return 0;
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    const targets=new Set();
+    for(const pocket of pockets){
+      for(const c of pocket){
+        for(const [dx,dy] of dirs){
+          const nx=c.x+dx, ny=c.y+dy;
+          if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+          if(isBlack(board[ny][nx])) targets.add(ny*GRID+nx);
+        }
+      }
+    }
+    let formed=0;
+    for(const key of targets){
+      const y=Math.floor(key/GRID), x=key%GRID;
+      const v=board[y][x];
+      if(!isBlack(v)) continue;
+      const next=(v.ttl|0)-1;
+      if(next>0) board[y][x]={t:'b', ttl: next};
+      else { board[y][x]={t:'w'}; formed++; }
+    }
+    return formed;
+  }
+
+  function capture(){
+    const pockets=pocketsOnBoard(board);
+    if(!pockets.length) return {cleared:0, interior:0};
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    const boundary=new Set();
+    let interior=0;
+    for(const pocket of pockets){
+      interior += pocket.length;
+      for(const cell of pocket){
+        for(const [dx,dy] of dirs){
+          const nx=cell.x+dx, ny=cell.y+dy;
+          if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+          if(board[ny][nx]!=null) boundary.add(ny*GRID+nx);
+        }
+      }
+    }
+    let cleared=0;
+    for(const key of boundary){
+      const y=Math.floor(key/GRID), x=key%GRID;
+      if(isColor(board[y][x])){ board[y][x]=null; cleared++; }
+    }
+    return {cleared, interior};
+  }
+
+  function updateHUD(){
+    scoreEl.textContent=score;
+    bestEl.textContent=best;
+  }
+
+
+  function anyMoveAvailable(){
+    for(const p of pieces){
+      if(p.used) continue;
+      for(let y=0;y<GRID;y++){
+        for(let x=0;x<GRID;x++){
+          if(canPlace(p,x,y)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  const banner=document.getElementById("banner");
+  const bannerTitle=document.getElementById("bannerTitle");
+  const bannerText=document.getElementById("bannerText");
+  const restartBtn=document.getElementById("restartBtn");
+  let gameOver=false;
+
+  function setGameOver(on){
+    gameOver=!!on;
+    if(banner) banner.style.display = on ? "block" : "none";
+  }
+
+
+  function renderPieces(){
+    piecesEl.innerHTML="";
+    pieces.forEach((p,idx)=>{
+      const slot=document.createElement("div");
+      slot.className="slot"+(p.used?" used":"");
+      const mini=document.createElement("canvas");
+      mini.className="mini";
+      mini.width=160; mini.height=90;
+      slot.appendChild(mini);
+
+      const m=mini.getContext("2d");
+      const block=16, gap=5;
+      const w=p.w*block+(p.w-1)*gap, h=p.h*block+(p.h-1)*gap;
+      const ox=(mini.width-w)/2, oy=(mini.height-h)/2;
+      for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+        if(!p.shape[y][x]) continue;
+        rr(m, ox+x*(block+gap), oy+y*(block+gap), block, block, 6);
+        m.fillStyle=p.color; m.fill();
+      }
+
+  // === Drag handling (mobile-safe): track pointer globally ===
+  let activePointerId=null;
+
+  function onMove(e){
+    if(!dragging) return;
+    if(activePointerId!==null && e.pointerId!==activePointerId) return;
+    const pt=clientToCanvas(e.clientX,e.clientY);
+    dragging.x=pt.x; dragging.y=pt.y;
+    hoverCell=pointerToGrid(e.clientX,e.clientY - SHADOW_OFFSET);
+    if(e.cancelable) e.preventDefault();
+  }
+
+  function endDrag(e){
+    if(!dragging) return;
+    if(activePointerId!==null && e.pointerId!==activePointerId) return;
+
+    const p=dragging.piece;
+    const drop=pointerToGrid(e.clientX,e.clientY - SHADOW_OFFSET);
+    if(!drop || !canPlace(p,drop.x,drop.y)){
+      dragging=null; hoverCell=null; activePointerId=null;
+      if(e.cancelable) e.preventDefault();
+      return;
+    }
+
+    const effective = placePiece(p, drop.x, drop.y);
+    p.used=true;
+
+    // score for placed blocks
+    score += effective*6;
+
+    // black seeds tick if pockets now exist
+    tickBlackSeedsFlagged();
+
+    // capture + score
+    const cap=capture();
+    if(cap.cleared>0){
+      const size = cap.cleared;
+      const base = cap.cleared*22 + cap.interior*3;
+      const big = Math.max(0, size-5);
+      const bonus = big*big*2; // extra reward for large clears on a 8x8 board
+      const pts = Math.round(base + bonus);
+      score += pts;
+      // tiny casino-style flash on big clears
+      try{
+        if(size >= 6){
+          const root = document.querySelector('.app');
+          if(root){
+            root.classList.add('flash-win');
+            setTimeout(()=>root.classList.remove('flash-win'), 260);
+          }
+        }
+      }catch(e){}
+    }
+
+    if(pieces.every(pp=>pp.used)) rollPieces(); else renderPieces();
+
+    if(score>best){best=score; localStorage.setItem("echo_grid_best_minimal", String(best));}
+    updateHUD();
+
+    // game over check
+    if(!anyMoveAvailable()){
+      setGameOver(true);
+    }
+
+    dragging=null; hoverCell=null; activePointerId=null;
+    if(e.cancelable) e.preventDefault();
+  }
+
+  window.addEventListener("pointermove", onMove, {passive:false});
+  window.addEventListener("pointerup", endDrag, {passive:false});
+  window.addEventListener("pointercancel", endDrag, {passive:false});
+
+  // === Touch fallback (some mobile browsers are flaky with PointerEvents on nested elements) ===
+  let activeTouchId=null;
+
+  function getTouchById(touchList, id){
+    for(const t of touchList){ if(t.identifier===id) return t; }
+    return null;
+  }
+
+  function touchMove(e){
+    if(!dragging) return;
+    const t = activeTouchId===null ? (e.touches[0]||null) : getTouchById(e.touches, activeTouchId);
+    if(!t) return;
+    const pt=clientToCanvas(t.clientX,t.clientY);
+    dragging.x=pt.x; dragging.y=pt.y;
+    hoverCell=pointerToGrid(t.clientX,t.clientY - SHADOW_OFFSET);
+    if(e.cancelable) e.preventDefault();
+  }
+
+  function touchEnd(e){
+    if(!dragging) return;
+    const t = activeTouchId===null ? (e.changedTouches[0]||null) : getTouchById(e.changedTouches, activeTouchId);
+    const cx = t ? t.clientX : 0;
+    const cy = t ? t.clientY : 0;
+    // call endDrag with a pointer-like object
+    endDrag({pointerId: activePointerId??0, clientX: cx, clientY: cy, cancelable: true, preventDefault: ()=>{}});
+    activeTouchId=null;
+    if(e.cancelable) e.preventDefault();
+  }
+
+  window.addEventListener("touchmove", touchMove, {passive:false});
+  window.addEventListener("touchend", touchEnd, {passive:false});
+  window.addEventListener("touchcancel", touchEnd, {passive:false});
+      const label=document.createElement("div");
+      label.className="slotLabel";
+      label.textContent = `${p.w}×${p.h}`;
+      slot.appendChild(label);
+
+      slot.addEventListener("pointerdown",(e)=>{        if(p.used) return;
+        if(gameOver) return;
+        activePointerId = e.pointerId;
+        try{ slot.setPointerCapture(e.pointerId); }catch(err){}
+        const pt=clientToCanvas(e.clientX,e.clientY);
+        dragging={piece:p, idx, x:pt.x, y:pt.y};
+        hoverCell=pointerToGrid(e.clientX,e.clientY - SHADOW_OFFSET);
+        if(e.cancelable) e.preventDefault();
+      });
+
+      slot.addEventListener("touchstart",(e)=>{
+        if(p.used) return; if(gameOver) return;
+        const t=e.touches[0]; if(!t) return;
+        activeTouchId=t.identifier;
+        const pt=clientToCanvas(t.clientX,t.clientY);
+        dragging={piece:p, idx, x:pt.x, y:pt.y};
+        hoverCell=pointerToGrid(t.clientX,t.clientY - SHADOW_OFFSET);        if(e.cancelable) e.preventDefault();
+      }, {passive:false});
+
+      piecesEl.appendChild(slot);
+    });
+  }
+
+  
+  if(restartBtn){ restartBtn.addEventListener("click", ()=>{ newGame(); }); }
+
+  function seed(){
+    const seed=3+Math.floor(Math.random()*3);
+    for(let i=0;i<seed;i++){
+      const x=Math.floor(Math.random()*GRID), y=Math.floor(Math.random()*GRID);
+      if(isEmpty(board[y][x])) board[y][x]={t:'c', color: COLORS[Math.floor(Math.random()*COLORS.length)]};
+    }
+    let placed=0, tries=0;
+    while(placed<GRAY_COUNT && tries<1000){
+      tries++;
+      const x=Math.floor(Math.random()*GRID), y=Math.floor(Math.random()*GRID);
+      if(isEmpty(board[y][x])){ board[y][x]={t:'g', uses: GRAY_START_USES}; placed++; }
+    }
+  }
+
+  function drawPieceGhost(p,gx,gy,ok){
+    const s=cellSize();
+    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+      if(!p.shape[y][x]) continue;
+      const bx=gx+x, by=gy+y;
+      if(bx<0||by<0||bx>=GRID||by>=GRID) continue;
+      const {px,py}=cellToPx(bx,by);
+      rr(ctx, px+2,py+2,s-4,s-4,10);
+      ctx.fillStyle=hexToRgba(p.color, ok?0.35:0.14);
+      ctx.fill();
+      if(ok){
+        rr(ctx, px+2,py+2,s-4,s-4,10);
+        ctx.strokeStyle="rgba(255,255,255,.22)";
+        ctx.lineWidth=2;
+        ctx.stroke();
+      }
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const s=cellSize();
+
+    for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
+      const {px,py}=cellToPx(x,y);
+      rr(ctx, px,py,s,s,12);
+      ctx.fillStyle="rgba(27,39,64,.62)"; ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.14)"; ctx.lineWidth=1; ctx.stroke();
+
+      const v=board[y][x];
+      if(!v) continue;
+
+      rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,11);
+
+      if(isColor(v)){
+        ctx.fillStyle=v.color; ctx.fill();
+      } else if(isGray(v)){
+        ctx.fillStyle="rgba(170,180,200,.75)"; ctx.fill();
+        ctx.fillStyle="rgba(10,14,22,.85)";
+        ctx.font=`900 ${Math.floor(s*0.38)}px system-ui`;
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(String(v.uses), px+s/2, py+s/2);
+      } else if(isBlack(v)){
+        ctx.fillStyle="rgba(12,12,14,.92)"; ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,.78)";
+        ctx.font=`900 ${Math.floor(s*0.36)}px system-ui`;
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(String(v.ttl), px+s/2, py+s/2);
+      } else if(isWall(v)){
+        ctx.fillStyle="rgba(0,0,0,.96)"; ctx.fill();
+        rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,11);
+        ctx.strokeStyle="rgba(255,255,255,.10)";
+        ctx.lineWidth=2; ctx.stroke();
+      }
+    }
+
+    if(dragging){
+      const p=dragging.piece;
+
+      // sizing relative to board cells
+      const s2=cellSize();
+      const isSmall = (Math.min(window.innerWidth||9999, window.innerHeight||9999) < 900);
+
+      // Make the dragged preview match the board scale on mobile
+      const block = isSmall ? (s2*0.82) : Math.min(38, s2*0.66);
+      const gap   = isSmall ? Math.max(2, s2*0.04) : 4;
+
+      // Offset preview so your thumb doesn't cover it.
+      // Straight pieces (1×N or N×1) get pushed farther away so they never overlap the ghost.
+      let offY;
+      if (p && ((p.w === 1 && p.h >= 3) || (p.h === 1 && p.w >= 3))) {
+        // extra distance for long straight pieces
+        offY = block * -5;
+      } else {
+        offY = block * -5;
+      }
+      const offX = isSmall ? (block * 0.1) : 0;
+
+      const px=dragging.x + offX;
+      const py=dragging.y - offY;
+
+      const w=p.w*block+(p.w-1)*gap, h=p.h*block+(p.h-1)*gap;
+      const ox=px-w/2, oy=py-h/2;
+
+      // subtle plate behind preview
+      rr(ctx, ox-10, oy-10, w+20, h+20, 14);
+      ctx.fillStyle="rgba(0,0,0,.24)";
+      ctx.fill();
+
+      for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+        if(!p.shape[y][x]) continue;
+        drawBevelBlock(ctx, ox+x*(block+gap), oy+y*(block+gap), block, block, p.color, 10);
+        ctx.strokeStyle="rgba(255,255,255,.22)"; ctx.lineWidth=2; ctx.stroke();
+      }
+    
+
+    if(dragging && hoverCell){
+      const p=dragging.piece;
+      const ok=canPlace(p,hoverCell.x,hoverCell.y);
+      drawPieceGhost(p,hoverCell.x,hoverCell.y,ok);
+    }}
+  }
+
+  function tick(){
+    try{
+      draw();
+      errEl.style.display="none";
+    }catch(e){
+      errEl.style.display="block";
+      errEl.textContent = (e && e.stack) ? e.stack : String(e);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function newGame(){
+    setGameOver(false);
+    board=emptyBoard();
+    score=0;
+    seed();
+    rollPieces();
+    updateHUD();
+    // If somehow no moves from the start, re-roll a few times.
+    for(let i=0;i<5 && !anyMoveAvailable();i++) rollPieces();
+    if(!anyMoveAvailable()) setGameOver(true);
+  }
+
+  best = Number(localStorage.getItem("echo_grid_best_minimal")||"0") || 0;
+  newGame();
+  requestAnimationFrame(tick);
+  window.addEventListener('resize', layout, {passive:true});
+  layout();
+
+})();
+</script>
+</body>
+</html>
