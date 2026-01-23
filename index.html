@@ -367,8 +367,33 @@ body {
   }
   
   const isSmallScreen = (Math.min(window.innerWidth||9999, window.innerHeight||9999) < 900);
-  const SHADOW_BLOCKS = 6; // shadow stays 8 blocks above
-  const shadowOffsetPx = () => (cellSize() + GAP) * SHADOW_BLOCKS;
+
+  // Smart adaptive shadow:
+  // - small pieces: closer shadow (less travel)
+  // - long pieces: higher shadow (keeps board visible under thumb)
+  // Always scaled by cell size so it works on any phone.
+  function shadowBlocksForPiece(piece){
+    if(!piece) return (isSmallScreen ? 5 : 4);
+
+    const w = piece.w || (piece.shape ? piece.shape[0].length : 1);
+    const h = piece.h || (piece.shape ? piece.shape.length : 1);
+    const maxDim = Math.max(w,h);
+
+    // Long/straight pieces get a higher aim shadow.
+    if(maxDim >= 4) return (isSmallScreen ? 7 : 6);
+    if(maxDim === 3) return (isSmallScreen ? 6 : 5);
+    return (isSmallScreen ? 5 : 4);
+  }
+
+  function shadowOffsetPx(piece){
+    const blocks = shadowBlocksForPiece(piece);
+    const px = (cellSize() + GAP) * blocks;
+
+    // Guarantee a minimum offset so the shadow is always visible above the thumb
+    // even if the board is tiny (very small screens).
+    const minPx = isSmallScreen ? 110 : 80;
+    return Math.max(px, minPx);
+  }
 function pointerToGrid(clientX,clientY){
     const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
     const x=(clientX-r.left)*sx, y=(clientY-r.top)*sy;
@@ -583,7 +608,7 @@ function pointerToGrid(clientX,clientY){
     if(activePointerId!==null && e.pointerId!==activePointerId) return;
     const pt=clientToCanvas(e.clientX,e.clientY);
     dragging.x=pt.x; dragging.y=pt.y;
-    hoverCell=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx());
+    hoverCell=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx(dragging ? dragging.piece : null));
     if(e.cancelable) e.preventDefault();
   }
 
@@ -592,7 +617,7 @@ function pointerToGrid(clientX,clientY){
     if(activePointerId!==null && e.pointerId!==activePointerId) return;
 
     const p=dragging.piece;
-    const drop=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx());
+    const drop=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx(dragging ? dragging.piece : null));
     if(!drop || !canPlace(p,drop.x,drop.y)){
       dragging=null; hoverCell=null; activePointerId=null;
       if(e.cancelable) e.preventDefault();
@@ -661,7 +686,7 @@ function pointerToGrid(clientX,clientY){
     if(!t) return;
     const pt=clientToCanvas(t.clientX,t.clientY);
     dragging.x=pt.x; dragging.y=pt.y;
-    hoverCell=pointerToGrid(t.clientX,t.clientY - shadowOffsetPx());
+    hoverCell=pointerToGrid(t.clientX,t.clientY - shadowOffsetPx(dragging ? dragging.piece : null));
     if(e.cancelable) e.preventDefault();
   }
 
@@ -690,7 +715,7 @@ function pointerToGrid(clientX,clientY){
         try{ slot.setPointerCapture(e.pointerId); }catch(err){}
         const pt=clientToCanvas(e.clientX,e.clientY);
         dragging={piece:p, idx, x:pt.x, y:pt.y};
-        hoverCell=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx());
+        hoverCell=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx(dragging ? dragging.piece : null));
         if(e.cancelable) e.preventDefault();
       });
 
@@ -700,7 +725,7 @@ function pointerToGrid(clientX,clientY){
         activeTouchId=t.identifier;
         const pt=clientToCanvas(t.clientX,t.clientY);
         dragging={piece:p, idx, x:pt.x, y:pt.y};
-        hoverCell=pointerToGrid(t.clientX,t.clientY - shadowOffsetPx());        if(e.cancelable) e.preventDefault();
+        hoverCell=pointerToGrid(t.clientX,t.clientY - shadowOffsetPx(dragging ? dragging.piece : null));        if(e.cancelable) e.preventDefault();
       }, {passive:false});
 
       piecesEl.appendChild(slot);
