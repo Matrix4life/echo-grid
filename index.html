@@ -3,11 +3,6 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-  <meta name="theme-color" content="#2b0b4a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="mobile-web-app-capable" content="yes" />
 <title>Echo Grid (Minimal)</title>
 <style>
   :root{
@@ -16,25 +11,21 @@
   }
   *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   body{
-  overflow:hidden;
-  margin:0;
-  min-height:100vh;
-  background:radial-gradient(1400px 900px at 20% 0%, #3b0764, #020617 55%),
-            radial-gradient(1200px 900px at 80% 100%, #064e3b, transparent 60%);
-  color:var(--txt);
-  display:flex;
-  justify-content:center;   /* center horizontally */
-  align-items:flex-start;   /* stick UI to the top */
-  padding:0;     /* no outer padding, use full screen */
-}
-  .app{width:100vw; max-width:100vw;}
+  overflow: hidden;
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 20% 10%, #172a55, #0b0f1a 55%);
+    color:var(--txt);
+    display:flex; align-items:center; justify-content:center;
+    padding:14px;
+  }
+  .app{width:100%; max-width:560px;}
   .hud{
     display:flex; gap:10px; align-items:center; justify-content:space-between;
     margin-bottom:10px;
   }
   .pill{
-    background:radial-gradient(circle at 30% 20%, #facc15, #a16207);
-    border:1px solid rgba(255,255,255,.45);
+    background:rgba(20,32,58,.55);
+    border:1px solid var(--stroke);
     border-radius:999px;
     padding:8px 12px;
     font-weight:700;
@@ -42,25 +33,24 @@
   }
   .pill span{color:var(--muted); font-weight:700}
   .boardCard, .piecesCard{
-    background:linear-gradient(145deg, rgba(18,28,52,.96), rgba(6,12,30,.96));
-    border:1px solid rgba(250,204,21,.22);
+    background:linear-gradient(180deg, rgba(18,28,52,.80), rgba(10,14,26,.72));
+    border:1px solid rgba(255,255,255,.10);
     border-radius:18px;
     box-shadow:0 10px 30px rgba(0,0,0,.35);
   }
-  .boardCard{padding:4px;}
+  .boardCard{padding:12px;}
   canvas#c{
     display:block;
-    width:calc(100vw - 8px);
-    height:calc(100vw - 8px);
-    max-width:600px; max-height:600px;
+    width:min(94vw, 520px);
+    height:min(94vw, 520px);
+    max-width:520px; max-height:520px;
     border-radius:14px;
-    background:radial-gradient(circle at 50% 20%, rgba(250,204,21,.08), transparent 55%),
-               linear-gradient(180deg, rgba(22,30,52,.95), rgba(5,10,24,.98));
+    background:linear-gradient(180deg, rgba(27,39,64,.65), rgba(12,18,34,.65));
     border:1px solid rgba(36,53,86,.80);
     touch-action:none;
     margin:0 auto;
   }
-  .piecesCard{margin-top:2px; padding:4px;}
+  .piecesCard{margin-top:10px; padding:10px;}
   .piecesRow{
     display:flex; gap:10px; justify-content:space-between;
   }
@@ -105,71 +95,16 @@ body, .boardCard, .piecesCard, .slot, .mini, canvas#c { touch-action: none; }
 .slot { cursor: grab; }
 .slot:active { cursor: grabbing; }
 
-
-  @keyframes casinoGlow {
-    0% { box-shadow:0 0 10px rgba(250,204,21,.25), 0 0 30px rgba(250,204,21,.18); }
-    50% { box-shadow:0 0 18px rgba(250,204,21,.40), 0 0 42px rgba(250,250,210,.30); }
-    100% { box-shadow:0 0 10px rgba(250,204,21,.25), 0 0 30px rgba(250,204,21,.18); }
-  }
-  .boardCard{
-    animation:casinoGlow 4.5s ease-in-out infinite;
-  }
-  .pill{
-    position:relative;
-    overflow:hidden;
-  }
-  .pill::after{
-    content:""; position:absolute; inset:-40%;
-    background:radial-gradient(circle at 10% 0%, rgba(255,255,255,.24), transparent 55%);
-    opacity:.6; mix-blend-mode:screen;
-  }
-
-
-  .flash-win .boardCard{
-    box-shadow:0 0 30px rgba(250,250,210,.75), 0 0 80px rgba(250,204,21,.85);
-    transition:box-shadow .18s ease-out;
-  }
-
-
-  /* Accessibility helpers */
-  .sr-only{
-    position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
-    overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
-  }
-  :focus-visible{ outline:3px solid rgba(255,215,90,.95); outline-offset:4px; }
-  @media (prefers-reduced-motion: reduce){
-    *{ animation-duration:0.001ms!important; animation-iteration-count:1!important; transition-duration:0.001ms!important; scroll-behavior:auto!important; }
-    .sparkle, .burst, .glowPulse{ display:none!important; }
-  }
-
-  /* Mobile friendliness: stop the page from scrolling while dragging */
-  .boardCard, #c, .piecesCard, .piecesRow, .pieceCard, .pieceCanvas{
-    touch-action:none;
-    -webkit-user-select:none;
-    user-select:none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Respect device safe-areas (notches/home indicator) */
-  .app{
-    padding-top: max(10px, env(safe-area-inset-top));
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
-  }
-
 </style>
 <style>
-/* --- Layout override: scores top, board center, blocks bottom, FULLSCREEN --- */
+/* --- Layout override: scores top, board center, blocks bottom --- */
 body {
   flex-direction: column;
   justify-content: flex-start;
-  align-items: center;
 }
 .app {
-  /* Full width on any phone, no side gutters */
-  width: 100vw;
-  max-width: 100vw;
+  width: 100%;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -177,69 +112,40 @@ body {
 .hud {
   width: 100%;
   justify-content: center !important;
-  margin-top: 8px;
-  margin-bottom: 8px;
+  margin-top: 10px;
+  margin-bottom: 14px;
 }
 .boardCard {
   width: 100%;
 }
 .piecesCard {
   width: 100%;
-  margin-top: 4px !important;
+  margin-top: 16px !important;
 }
 .piecesRow {
   justify-content: center !important;
 }
-
-  /* Accessibility helpers */
-  .sr-only{
-    position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
-    overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
-  }
-  :focus-visible{ outline:3px solid rgba(255,215,90,.95); outline-offset:4px; }
-  @media (prefers-reduced-motion: reduce){
-    *{ animation-duration:0.001ms!important; animation-iteration-count:1!important; transition-duration:0.001ms!important; scroll-behavior:auto!important; }
-    .sparkle, .burst, .glowPulse{ display:none!important; }
-  }
-
-  /* Mobile friendliness: stop the page from scrolling while dragging */
-  .boardCard, #c, .piecesCard, .piecesRow, .pieceCard, .pieceCanvas{
-    touch-action:none;
-    -webkit-user-select:none;
-    user-select:none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Respect device safe-areas (notches/home indicator) */
-  .app{
-    padding-top: max(10px, env(safe-area-inset-top));
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
-  }
-
 </style>
 </head>
 <body>
-  <div class="app" role="application" aria-label="Block puzzle game">
-    <p id="instructions" class="sr-only">Drag a piece from the bottom tray onto the board. A shadow shows where it will land. Release to place it. Clear full rows or columns to score.</p>
+  <div class="app">
     <div class="hud">
-      <div class="pill"><span>Score</span><b id="score" aria-live="polite">0</b></div>
-      <div class="pill"><span>Top</span><b id="best" aria-live="polite">0</b></div>
+      <div class="pill"><span>Score</span><b id="score">0</b></div>
+      <div class="pill"><span>Top</span><b id="best">0</b></div>
     </div>
 
     <div id="banner" style="display:none;margin:10px 0;padding:10px 12px;border-radius:14px;
       background:rgba(20,32,58,.55);border:1px solid rgba(255,255,255,.12);width:100%;">
       <b id="bannerTitle">Game Over</b>
       <div id="bannerText" style="color:var(--muted);margin-top:4px;">No legal placements remain.</div>
-      <button id="restartBtn" aria-label="Start a new game" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:12px;
+      <button id="restartBtn" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:12px;
         border:1px solid rgba(255,255,255,.12);background:rgba(27,39,64,.35);color:var(--txt);font-weight:800;cursor:pointer;">
         New Game
       </button>
     </div>
 
     <div class="boardCard">
-      <canvas id="c" width="680" height="680" tabindex="0" aria-label="Game board" aria-describedby="instructions"></canvas>
+      <canvas id="c" width="680" height="680"></canvas>
     </div>
 
     <div class="piecesCard">
@@ -249,11 +155,14 @@ body {
     <div id="err"></div>
   </div>
 
+<div id="dbg" style="position:fixed;left:10px;bottom:10px;z-index:50;
+  background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);
+  color:#e8eefc;padding:6px 8px;border-radius:10px;font:700 12px system-ui;
+  display:none;"></div>
 
 <script>
 (() => {
-  const GRID=8;
-  let PAD=18, GAP=4, N=680, CELL=0;
+  const GRID=7, PAD=18, GAP=4;
   const canvas=document.getElementById("c");
   const ctx=canvas.getContext("2d");
   const errEl=document.getElementById("err");
@@ -263,7 +172,7 @@ body {
 
   // Special tiles
   const GRAY_START_USES = 4;
-  const GRAY_COUNT = 4;
+  const GRAY_COUNT = 6;
   const BLACK_TO_WALL_TURNS = 3;
 
   // Cell types:
@@ -312,89 +221,16 @@ body {
     return `rgba(${r},${g},${b},${a})`;
   }
 
-  function clamp01(t){ return Math.max(0, Math.min(1, t)); }
-  function shade(hex, amt){ // amt: -1..1
-    hex = (hex||"#000").replace("#","");
-    if(hex.length===3) hex = hex.split("").map(c=>c+c).join("");
-    const num=parseInt(hex,16);
-    let r=(num>>16)&255, g=(num>>8)&255, b=num&255;
-    const f = (x)=>Math.max(0,Math.min(255, Math.round(x + 255*amt)));
-    r=f(r); g=f(g); b=f(b);
-    return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
-  }
-
-  function drawBevelBlock(ctx,x,y,w,h,color,round=10){
-    // Base body
-    rr(ctx,x,y,w,h,round);
-    const g=ctx.createLinearGradient(x,y,x+w,y+h);
-    g.addColorStop(0, shade(color, 0.28));
-    g.addColorStop(0.45, shade(color, 0.08));
-    g.addColorStop(1, shade(color,-0.18));
-    ctx.fillStyle=g; ctx.fill();
-
-    // Inner face
-    const pad=Math.max(2, w*0.08);
-    rr(ctx, x+pad, y+pad, w-2*pad, h-2*pad, Math.max(6, round-3));
-    const g2=ctx.createLinearGradient(x+pad,y+pad,x+w-pad,y+h-pad);
-    g2.addColorStop(0, shade(color, 0.32));
-    g2.addColorStop(1, shade(color,-0.05));
-    ctx.fillStyle=g2; ctx.fill();
-
-    // Specular highlight (top-left sweep)
-    ctx.save();
-    ctx.globalAlpha=0.38;
-    rr(ctx, x+pad*0.7, y+pad*0.6, (w-2*pad)*0.9, (h-2*pad)*0.45, Math.max(5, round-5));
-    ctx.fillStyle="#ffffff";
-    ctx.fill();
-    ctx.restore();
-
-    // Edge strokes (gold-ish outer glow)
-    ctx.strokeStyle="rgba(250,204,21,.55)"; ctx.lineWidth=1.6;
-    rr(ctx,x+0.8,y+0.8,w-1.6,h-1.6,round); ctx.stroke();
-
-    ctx.strokeStyle="rgba(0,0,0,.35)"; ctx.lineWidth=2;
-    rr(ctx,x+2, y+2, w-4, h-4, round-1); ctx.stroke();
-  }
-
   function emptyBoard(){return Array.from({length:GRID},()=>Array(GRID).fill(null));}
 
   function cellSize(){const inner=canvas.width-PAD*2; return (inner-GAP*(GRID-1))/GRID;}
-  function cellToPx(x,y){const s = cellSize()*0.90; return {px:PAD+x*(s+GAP), py:PAD+y*(s+GAP), s};}
+  function cellToPx(x,y){const s=cellSize(); return {px:PAD+x*(s+GAP), py:PAD+y*(s+GAP), s};}
   function getRect(){return canvas.getBoundingClientRect();}
   function clientToCanvas(clientX,clientY){
     const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
     return {x:(clientX-r.left)*sx, y:(clientY-r.top)*sy};
   }
-  
-  const isSmallScreen = (Math.min(window.innerWidth||9999, window.innerHeight||9999) < 900);
-
-  // Smart adaptive shadow:
-  // - small pieces: closer shadow (less travel)
-  // - long pieces: higher shadow (keeps board visible under thumb)
-  // Always scaled by cell size so it works on any phone.
-  function shadowBlocksForPiece(piece){
-    if(!piece) return (isSmallScreen ? 5 : 4);
-
-    const w = piece.w || (piece.shape ? piece.shape[0].length : 1);
-    const h = piece.h || (piece.shape ? piece.shape.length : 1);
-    const maxDim = Math.max(w,h);
-
-    // Long/straight pieces get a higher aim shadow.
-    if(maxDim >= 4) return (isSmallScreen ? 7 : 6);
-    if(maxDim === 3) return (isSmallScreen ? 6 : 5);
-    return (isSmallScreen ? 5 : 4);
-  }
-
-  function shadowOffsetPx(piece){
-    const blocks = shadowBlocksForPiece(piece);
-    const px = (cellSize() + GAP) * blocks;
-
-    // Guarantee a minimum offset so the shadow is always visible above the thumb
-    // even if the board is tiny (very small screens).
-    const minPx = isSmallScreen ? 110 : 80;
-    return Math.max(px, minPx);
-  }
-function pointerToGrid(clientX,clientY){
+  function pointerToGrid(clientX,clientY){
     const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
     const x=(clientX-r.left)*sx, y=(clientY-r.top)*sy;
     const s=cellSize();
@@ -608,7 +444,7 @@ function pointerToGrid(clientX,clientY){
     if(activePointerId!==null && e.pointerId!==activePointerId) return;
     const pt=clientToCanvas(e.clientX,e.clientY);
     dragging.x=pt.x; dragging.y=pt.y;
-    hoverCell=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx(dragging ? dragging.piece : null));
+    hoverCell=pointerToGrid(e.clientX,e.clientY);
     if(e.cancelable) e.preventDefault();
   }
 
@@ -617,7 +453,7 @@ function pointerToGrid(clientX,clientY){
     if(activePointerId!==null && e.pointerId!==activePointerId) return;
 
     const p=dragging.piece;
-    const drop=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx(dragging ? dragging.piece : null));
+    const drop=pointerToGrid(e.clientX,e.clientY);
     if(!drop || !canPlace(p,drop.x,drop.y)){
       dragging=null; hoverCell=null; activePointerId=null;
       if(e.cancelable) e.preventDefault();
@@ -636,22 +472,8 @@ function pointerToGrid(clientX,clientY){
     // capture + score
     const cap=capture();
     if(cap.cleared>0){
-      const size = cap.cleared;
-      const base = cap.cleared*22 + cap.interior*3;
-      const big = Math.max(0, size-5);
-      const bonus = big*big*2; // extra reward for large clears on a 8x8 board
-      const pts = Math.round(base + bonus);
+      const pts = Math.round(cap.cleared*26 + cap.interior*3);
       score += pts;
-      // tiny casino-style flash on big clears
-      try{
-        if(size >= 6){
-          const root = document.querySelector('.app');
-          if(root){
-            root.classList.add('flash-win');
-            setTimeout(()=>root.classList.remove('flash-win'), 260);
-          }
-        }
-      }catch(e){}
     }
 
     if(pieces.every(pp=>pp.used)) rollPieces(); else renderPieces();
@@ -686,7 +508,7 @@ function pointerToGrid(clientX,clientY){
     if(!t) return;
     const pt=clientToCanvas(t.clientX,t.clientY);
     dragging.x=pt.x; dragging.y=pt.y;
-    hoverCell=pointerToGrid(t.clientX,t.clientY - shadowOffsetPx(dragging ? dragging.piece : null));
+    hoverCell=pointerToGrid(t.clientX,t.clientY);
     if(e.cancelable) e.preventDefault();
   }
 
@@ -709,13 +531,15 @@ function pointerToGrid(clientX,clientY){
       label.textContent = `${p.w}×${p.h}`;
       slot.appendChild(label);
 
-      slot.addEventListener("pointerdown",(e)=>{        if(p.used) return;
+      slot.addEventListener("pointerdown",(e)=>{
+        const dbg=document.getElementById("dbg"); if(dbg){dbg.style.display="block"; dbg.textContent="pointerdown";}
+        if(p.used) return;
         if(gameOver) return;
         activePointerId = e.pointerId;
         try{ slot.setPointerCapture(e.pointerId); }catch(err){}
         const pt=clientToCanvas(e.clientX,e.clientY);
         dragging={piece:p, idx, x:pt.x, y:pt.y};
-        hoverCell=pointerToGrid(e.clientX,e.clientY - shadowOffsetPx(dragging ? dragging.piece : null));
+        hoverCell=pointerToGrid(e.clientX,e.clientY);
         if(e.cancelable) e.preventDefault();
       });
 
@@ -725,7 +549,9 @@ function pointerToGrid(clientX,clientY){
         activeTouchId=t.identifier;
         const pt=clientToCanvas(t.clientX,t.clientY);
         dragging={piece:p, idx, x:pt.x, y:pt.y};
-        hoverCell=pointerToGrid(t.clientX,t.clientY - shadowOffsetPx(dragging ? dragging.piece : null));        if(e.cancelable) e.preventDefault();
+        hoverCell=pointerToGrid(t.clientX,t.clientY);
+        const dbg=document.getElementById("dbg"); if(dbg){dbg.style.display="block"; dbg.textContent="touchstart";}
+        if(e.cancelable) e.preventDefault();
       }, {passive:false});
 
       piecesEl.appendChild(slot);
@@ -736,7 +562,7 @@ function pointerToGrid(clientX,clientY){
   if(restartBtn){ restartBtn.addEventListener("click", ()=>{ newGame(); }); }
 
   function seed(){
-    const seed=3+Math.floor(Math.random()*3);
+    const seed=4+Math.floor(Math.random()*4);
     for(let i=0;i<seed;i++){
       const x=Math.floor(Math.random()*GRID), y=Math.floor(Math.random()*GRID);
       if(isEmpty(board[y][x])) board[y][x]={t:'c', color: COLORS[Math.floor(Math.random()*COLORS.length)]};
@@ -757,7 +583,7 @@ function pointerToGrid(clientX,clientY){
       if(bx<0||by<0||bx>=GRID||by>=GRID) continue;
       const {px,py}=cellToPx(bx,by);
       rr(ctx, px+2,py+2,s-4,s-4,10);
-      ctx.fillStyle=hexToRgba(p.color, ok?0.35:0.14);
+      ctx.fillStyle=hexToRgba(p.color, ok?0.25:0.10);
       ctx.fill();
       if(ok){
         rr(ctx, px+2,py+2,s-4,s-4,10);
@@ -799,89 +625,4 @@ function pointerToGrid(clientX,clientY){
         ctx.fillText(String(v.ttl), px+s/2, py+s/2);
       } else if(isWall(v)){
         ctx.fillStyle="rgba(0,0,0,.96)"; ctx.fill();
-        rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,11);
-        ctx.strokeStyle="rgba(255,255,255,.10)";
-        ctx.lineWidth=2; ctx.stroke();
-      }
-    }
-
-    if(dragging){
-      const p=dragging.piece;
-
-      // sizing relative to board cells
-      const s2=cellSize();
-      const isSmall = (Math.min(window.innerWidth||9999, window.innerHeight||9999) < 900);
-
-      // Make the dragged preview match the board scale on mobile
-      const block = isSmall ? (s2*0.82) : Math.min(38, s2*0.66);
-      const gap   = isSmall ? Math.max(2, s2*0.04) : 4;
-
-      // Offset preview so your thumb doesn't cover it.
-      // Straight pieces (1×N or N×1) get pushed farther away so they never overlap the ghost.
-      let offY;
-      if (p && ((p.w === 1 && p.h >= 3) || (p.h === 1 && p.w >= 3))) {
-        // extra distance for long straight pieces
-        offY = block * -5;
-      } else {
-        offY = block * -5;
-      }
-      const offX = isSmall ? (block * 0.1) : 0;
-
-      const px=dragging.x + offX;
-      const py=dragging.y - offY;
-
-      const w=p.w*block+(p.w-1)*gap, h=p.h*block+(p.h-1)*gap;
-      const ox=px-w/2, oy=py-h/2;
-
-      // subtle plate behind preview
-      rr(ctx, ox-10, oy-10, w+20, h+20, 14);
-      ctx.fillStyle="rgba(0,0,0,.24)";
-      ctx.fill();
-
-      for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
-        if(!p.shape[y][x]) continue;
-        drawBevelBlock(ctx, ox+x*(block+gap), oy+y*(block+gap), block, block, p.color, 10);
-        ctx.strokeStyle="rgba(255,255,255,.22)"; ctx.lineWidth=2; ctx.stroke();
-      }
-    
-
-    if(dragging && hoverCell){
-      const p=dragging.piece;
-      const ok=canPlace(p,hoverCell.x,hoverCell.y);
-      drawPieceGhost(p,hoverCell.x,hoverCell.y,ok);
-    }}
-  }
-
-  function tick(){
-    try{
-      draw();
-      errEl.style.display="none";
-    }catch(e){
-      errEl.style.display="block";
-      errEl.textContent = (e && e.stack) ? e.stack : String(e);
-    }
-    requestAnimationFrame(tick);
-  }
-
-  function newGame(){
-    setGameOver(false);
-    board=emptyBoard();
-    score=0;
-    seed();
-    rollPieces();
-    updateHUD();
-    // If somehow no moves from the start, re-roll a few times.
-    for(let i=0;i<5 && !anyMoveAvailable();i++) rollPieces();
-    if(!anyMoveAvailable()) setGameOver(true);
-  }
-
-  best = Number(localStorage.getItem("echo_grid_best_minimal")||"0") || 0;
-  newGame();
-  requestAnimationFrame(tick);
-  window.addEventListener('resize', layout, {passive:true});
-  layout();
-
-})();
-</script>
-</body>
-</html>
+        rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4
