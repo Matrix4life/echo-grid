@@ -2,208 +2,299 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Echo Grid (Minimal)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Echo Grid — Stable (Entropy + Combo Decay)</title>
 <style>
-  :root{
-    --bg1:#0b1020; --bg2:#111c33; --card:rgba(18,28,52,.72);
-    --stroke:rgba(255,255,255,.12); --txt:#e8eefc; --muted:#97a7c6;
-  }
+  :root{--txt:#e8eefc;--muted:#97a7c6;}
   *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  body{
-  overflow: hidden;
-    margin:0; min-height:100vh;
-    background:radial-gradient(1200px 800px at 20% 10%, #172a55, #0b0f1a 55%);
-    color:var(--txt);
-    display:flex; align-items:center; justify-content:center;
-    padding:14px;
+  body{margin:0;background:radial-gradient(1200px 800px at 20% 10%, #172142, #0b0f1a 55%);color:var(--txt)}
+  .wrap{max-width:1120px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr 380px;gap:16px}
+  @media (max-width: 980px){.wrap{grid-template-columns:1fr}}
+  .card{background:rgba(18,26,43,.92);border:1px solid rgba(36,53,86,.7);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+  .boardCard{padding:14px;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden}
+  canvas{width:min(94vw,680px);height:min(94vw,680px);border-radius:12px;background:linear-gradient(180deg, rgba(27,39,64,.65), rgba(12,18,34,.65));border:1px solid rgba(36,53,86,.8);touch-action:none}
+  .side{padding:14px;display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .title{font-weight:950;letter-spacing:.2px}
+  .pill{padding:6px 10px;border-radius:999px;background:rgba(36,53,86,.55);border:1px solid rgba(36,53,86,.9);color:var(--muted);font-size:13px}
+  .pill b{color:var(--txt)}
+  .btns{display:flex;gap:10px}
+  button{flex:1;padding:10px 12px;border-radius:12px;border:1px solid rgba(36,53,86,.9);background:rgba(27,39,64,.75);color:var(--txt);cursor:pointer;font-weight:850}
+  button:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .toggleRow{display:flex;gap:10px}
+  .toggle{flex:1;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:12px;border:1px solid rgba(36,53,86,.9);background:rgba(27,39,64,.45);color:var(--muted);font-size:13px;user-select:none}
+  .toggle input{accent-color:#8ab4ff}
+  .pieces{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .slot{padding:10px;border-radius:14px;border:1px dashed rgba(151,167,198,.35);background:rgba(11,15,26,.25);min-height:124px;display:flex;flex-direction:column;gap:8px;justify-content:center;align-items:center}
+  .slot.used{opacity:.28;filter:saturate(.5) brightness(.85)}
+  .slot.reco{outline:2px solid rgba(255,255,255,.18);box-shadow:0 0 0 6px rgba(125,211,252,.08)}
+  .meta{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .chip{font-size:12px;color:var(--muted);border:1px solid rgba(255,255,255,.14);padding:4px 8px;border-radius:999px}
+  .hint{color:var(--muted);font-size:13px;line-height:1.35}
+  .coachCard{padding:12px;border-radius:14px;background:rgba(11,15,26,.22);border:1px solid rgba(36,53,86,.65)}
+  .coachCard h3{margin:0;font-size:14px}
+  .coachCard .sub{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.35}
+  .coachCard .sep{margin-top:10px;border-top:1px solid rgba(36,53,86,.55);padding-top:10px}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:18px}
+  .modal{width:min(560px,95vw);padding:18px;border-radius:16px}
+  .modal h2{margin:0 0 6px}
+  .modal p{margin:0 0 14px;color:var(--muted)}
+  .toast{position:absolute;left:18px;top:18px;pointer-events:none;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);display:flex;gap:10px;align-items:center;opacity:0;transform:translateY(-10px);transition:opacity .18s ease, transform .18s ease}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast .big{font-weight:950}
+  .toast .small{font-size:12px;color:var(--muted)}
+
+/* --- Mobile-first layout improvements --- */
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Prevent scroll/zoom gestures stealing touches */
+html, body{
+  overscroll-behavior: none;
+  touch-action: none;
+  height: 100%;
+}
+
+/* Make the app fill the viewport safely */
+body{
+  padding: calc(12px + var(--safe-top)) calc(12px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(12px + var(--safe-left));
+}
+
+/* Compact the right panel on mobile and move it under the board */
+@media (max-width: 980px){
+  .wrap{
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    align-items: start !important;
   }
-  .app{width:100%; max-width:560px;}
-  .hud{
-    display:flex; gap:10px; align-items:center; justify-content:space-between;
-    margin-bottom:10px;
+  .left, .right{
+    width: 100% !important;
+    max-width: 100% !important;
   }
-  .pill{
-    background:rgba(20,32,58,.55);
-    border:1px solid var(--stroke);
-    border-radius:999px;
-    padding:8px 12px;
-    font-weight:700;
-    display:flex; gap:10px; align-items:center;
+  /* Make the board area feel centered and full-width */
+  .boardCard{
+    padding: 12px !important;
   }
-  .pill span{color:var(--muted); font-weight:700}
-  .boardCard, .piecesCard{
-    background:linear-gradient(180deg, rgba(18,28,52,.80), rgba(10,14,26,.72));
-    border:1px solid rgba(255,255,255,.10);
-    border-radius:18px;
-    box-shadow:0 10px 30px rgba(0,0,0,.35);
-  }
-  .boardCard{padding:12px;}
-  canvas#c{
-    display:block;
-    width:min(94vw, 520px);
-    height:min(94vw, 520px);
-    max-width:520px; max-height:520px;
-    border-radius:14px;
-    background:linear-gradient(180deg, rgba(27,39,64,.65), rgba(12,18,34,.65));
-    border:1px solid rgba(36,53,86,.80);
-    touch-action:none;
-    margin:0 auto;
-  }
-  .piecesCard{margin-top:10px; padding:10px;}
-  .piecesRow{
-    display:flex; gap:10px; justify-content:space-between;
-  }
-  .slot{
-    flex:1;
-    border-radius:14px;
-    border:1px solid rgba(36,53,86,.80);
-    background:rgba(27,39,64,.22);
-    padding:8px;
-    position:relative;
-    min-width:0;
-  }
-  .slot.used{opacity:.35; filter:saturate(.6);}
-  .slotLabel{
-    margin-top:6px;
-    font-size:12px;
-    color:var(--muted);
-    text-align:center;
-    font-weight:800;
-    letter-spacing:.2px;
-  }
-  .mini{
-    width:100%; height:76px;
-    border-radius:12px;
-    display:block;
-    background:rgba(27,39,64,.22);
-  }
-  #err{
-    margin-top:10px;
-    white-space:pre-wrap;
-    color:#ffd0d0;
-    background:rgba(120,20,20,.22);
-    border:1px solid rgba(255,120,120,.25);
-    padding:10px;
-    border-radius:12px;
-    display:none;
+  canvas{
+    width: 100% !important;
+    height: auto !important;
+    display: block;
+    max-height: calc(62vh - var(--safe-top));
   }
 
-/* === Mobile drag fixes === */
-body, .boardCard, .piecesCard, .slot, .mini, canvas#c { touch-action: none; }
-.piecesCard { -webkit-user-select:none; user-select:none; }
-.slot { cursor: grab; }
-.slot:active { cursor: grabbing; }
+  /* Right panel becomes a bottom "drawer" */
+  .right{
+    position: relative !important;
+  }
+  .panel{
+    padding: 12px !important;
+  }
 
-</style>
-<style>
-/* --- Layout override: scores top, board center, blocks bottom --- */
-body {
-  flex-direction: column;
-  justify-content: flex-start;
+  /* Make buttons/thumb targets bigger */
+  button, .btn{
+    min-height: 46px !important;
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+    border-radius: 14px !important;
+  }
+  .tog{
+    min-height: 44px !important;
+  }
+
+  /* Piece tray: horizontal, sticky, always reachable */
+  .pieces{
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    position: sticky !important;
+    bottom: calc(10px + var(--safe-bottom));
+    z-index: 9;
+    background: rgba(10,16,30,.55);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px;
+    padding: 10px;
+    margin-top: 10px !important;
+  }
+  .pieceCard{
+    border-radius: 16px !important;
+    padding: 10px !important;
+  }
+  .pieceTitle{
+    font-size: 12px !important;
+  }
+  .pieceSub{
+    font-size: 11px !important;
+  }
+
+  /* Reduce density of small text blocks */
+  .help, .how{
+    font-size: 12.5px !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Keep header compact */
+  .titleRow{
+    gap: 10px !important;
+    flex-wrap: wrap;
+  }
+  .title{
+    font-size: 18px !important;
+  }
 }
-.app {
-  width: 100%;
-  max-width: 560px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+
+/* Extra-small phones */
+@media (max-width: 420px){
+  .pieces{
+    grid-template-columns: 1fr !important;
+  }
+  canvas{
+    max-height: calc(58vh - var(--safe-top));
+  }
 }
-.hud {
-  width: 100%;
-  justify-content: center !important;
-  margin-top: 10px;
-  margin-bottom: 14px;
-}
-.boardCard {
-  width: 100%;
-}
-.piecesCard {
-  width: 100%;
-  margin-top: 16px !important;
-}
-.piecesRow {
-  justify-content: center !important;
-}
+
 </style>
 </head>
 <body>
-  <div class="app">
-    <div class="hud">
-      <div class="pill"><span>Score</span><b id="score">0</b></div>
-      <div class="pill"><span>Top</span><b id="best">0</b></div>
-    </div>
-
-    <div id="banner" style="display:none;margin:10px 0;padding:10px 12px;border-radius:14px;
-      background:rgba(20,32,58,.55);border:1px solid rgba(255,255,255,.12);width:100%;">
-      <b id="bannerTitle">Game Over</b>
-      <div id="bannerText" style="color:var(--muted);margin-top:4px;">No legal placements remain.</div>
-      <button id="restartBtn" style="margin-top:10px;width:100%;padding:10px 12px;border-radius:12px;
-        border:1px solid rgba(255,255,255,.12);background:rgba(27,39,64,.35);color:var(--txt);font-weight:800;cursor:pointer;">
-        New Game
-      </button>
-    </div>
-
-    <div class="boardCard">
-      <canvas id="c" width="680" height="680"></canvas>
-    </div>
-
-    <div class="piecesCard">
-      <div class="piecesRow" id="pieces"></div>
-    </div>
-
-    <div id="err"></div>
+<div class="wrap">
+  <div class="card boardCard">
+    <div class="toast" id="toast"><div class="big" id="toastBig">CAPTURE!</div><div class="small" id="toastSmall">Pocket secured</div></div>
+    <canvas id="c" width="680" height="680"></canvas>
   </div>
 
-<div id="dbg" style="position:fixed;left:10px;bottom:10px;z-index:50;
-  background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);
-  color:#e8eefc;padding:6px 8px;border-radius:10px;font:700 12px system-ui;
-  display:none;"></div>
+  <div class="card side">
+    <div class="row">
+      <div class="title">Echo Grid</div>
+      <div class="pill">Stable build</div>
+    </div>
+
+    <div class="row">
+      <div class="pill">Score: <b id="score">0</b></div>
+      <div class="pill">Best: <b id="best">0</b></div>
+      <div class="pill">Heat: <b id="heat">1.00</b></div>
+      <div class="pill">Combo: <b id="combo">x1.0</b></div>
+      <div class="pill">Last: <b id="last">—</b></div>
+    </div>
+
+    <div class="btns">
+      <button id="new">New</button>
+      <button id="undo" disabled>Undo</button>
+    </div>
+
+    <div class="toggleRow">
+      <label class="toggle"><span>Sound</span><input id="sound" type="checkbox" checked/></label>
+      <label class="toggle"><span>Coach</span><input id="coach" type="checkbox" checked/></label>
+    </div>
+
+    <div class="pieces" id="pieces"></div>
+
+    <div class="coachCard">
+      <div class="row" style="gap:8px">
+        <h3>Coach — Why this move?</h3>
+        <div class="pill" style="margin:0">Help: <b id="coachHelp">100%</b></div>
+      </div>
+      <div class="sub" id="coachWhy">Coach suggests a capture (or safe space-saving move).</div>
+      <div class="sep">
+        <div style="font-weight:850;margin-bottom:6px;color:rgba(232,238,252,.95)">What just happened</div>
+        <div class="sub" id="coachRecap">Make a move to see a recap.</div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <b>How to play:</b> Drag a piece onto the grid.<br/>
+      <b>Capture:</b> Fully enclose empty space → bordering blocks clear.<br/>
+      <b>Flags:</b> While dragging, every capturable empty cell shows a flag.<br/>
+      <b>Anti-farm:</b> Huge captures create <b>Entropy</b> (dark unremovable blocks) and repeating the same big capture pattern decays combo.<br/>
+      <b>Lose:</b> When none of the 3 pieces can be placed.
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="card modal">
+    <h2>Game Over</h2>
+    <p>No legal placements with the current set.</p>
+    <div class="btns"><button id="again">Play again</button></div>
+  </div>
+</div>
 
 <script>
 (() => {
-  const GRID=7, PAD=18, GAP=4;
+  // ---- Hard-stable, self-contained build ----
+  const GRID=10, PAD=18, GAP=4;
+
+  const ENTROPY="__ENTROPY__";
+  const ENTROPY_DEAD="__ENTROPY_DEAD__"; // exhausted entropy (black, permanent edge)
+  // Tracks how often each Entropy tile has been used in entropy-assisted captures
+  const entropyUse = Array.from({length:GRID},()=>Array(GRID).fill(0));
+  const ENTROPY_MATURE_TURNS = 3;
+  const ENTROPY_MAX_USES = 4; // after this many uses, the tile is 'exhausted' // after this many uses, the tile is 'exhausted'
+  // Turn index when an Entropy tile was created (for maturity)
+  const entropyBorn = Array.from({length:GRID},()=>Array(GRID).fill(-1));
+  const ENTROPY_COLOR="#0b1224";
+
+  const LARGE_CAPTURE_THRESHOLD=12; // interior cells enclosed
+  const ENTROPY_PER_CELLS=4;        // 1 entropy per 4 interior cells (floor)
+  const EXPERT_TIER=4;
+  const EXPERT_IN_LAST_N=5;
+  const EXPERT_COUNT_TRIGGER=2;     // repeated expert pressure
+
   const canvas=document.getElementById("c");
   const ctx=canvas.getContext("2d");
-  const errEl=document.getElementById("err");
+
   const scoreEl=document.getElementById("score");
   const bestEl=document.getElementById("best");
+  const heatEl=document.getElementById("heat");
+  const comboEl=document.getElementById("combo");
+  const lastEl=document.getElementById("last");
   const piecesEl=document.getElementById("pieces");
 
-  // Special tiles
-  const GRAY_START_USES = 4;
-  const GRAY_COUNT = 6;
-  const BLACK_TO_WALL_TURNS = 3;
-
-  // Cell types:
-  // null empty
-  // {t:'c', color:'#hex'} colored
-  // {t:'g', uses:n} gray countdown
-  // {t:'b', ttl:n} black seed countdown -> wall
-  // {t:'w'} wall
-  const isEmpty=v=>v==null;
-  const isGray=v=>v&&v.t==='g';
-  const isBlack=v=>v&&v.t==='b';
-  const isWall=v=>v&&v.t==='w';
-  const isColor=v=>v&&v.t==='c';
-  const isPlaceable=v=>isEmpty(v)||isGray(v);
+  const overlay=document.getElementById("overlay");
+  const btnNew=document.getElementById("new");
+  const btnUndo=document.getElementById("undo");
+  const btnAgain=document.getElementById("again");
+  const soundToggle=document.getElementById("sound");
+  const coachToggle=document.getElementById("coach");
+  const coachHelpEl=document.getElementById("coachHelp");
+  const coachWhyEl=document.getElementById("coachWhy");
+  const coachRecapEl=document.getElementById("coachRecap");
+  const toast=document.getElementById("toast");
+  const toastBig=document.getElementById("toastBig");
+  const toastSmall=document.getElementById("toastSmall");
 
   const COLORS=["#6ee7ff","#a78bfa","#fb7185","#34d399","#fbbf24","#60a5fa","#f472b6","#22c55e","#f97316"];
   const SHAPES=[
-    [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]],
-    [[1,1,1,1]], [[1],[1],[1],[1]], [[1,1],[1,1]],
-    [[1,0],[1,0],[1,1]], [[0,1],[0,1],[1,1]],
-    [[1,1,1],[0,1,0]], [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]],
-    [[1,1,1],[1,0,0]], [[1,1,1],[0,0,1]],
+    [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]], [[1,1,1,1]], [[1],[1],[1],[1]],
+    [[1,1],[1,1]], [[1,1,1],[1,1,1]], [[1,1],[1,1],[1,1]],
+    [[1,0],[1,0],[1,1]], [[0,1],[0,1],[1,1]], [[1,1,1],[0,1,0]],
+    [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]],
+    [[1,1,1],[1,0,0]], [[1,1,1],[0,0,1]], [[1,0,0],[1,1,1]], [[0,0,1],[1,1,1]],
   ];
 
-  let board=null;
-  let pieces=[];
-  let score=0, best=0;
+  // state
+  let board, pieces;
+  let score=0, best=0, turn=0, heat=1.0;
+  let combo=0, comboMult=1.0;
+  let repeatCount=0, lastCapTier=null, lastCapZone=null;
+  const capHistory=[]; // {tier, zone, interior}
+  let lastDifficulty="—";
+  let coachAssist=1.0, coachSuggestion=null;
+  let dragging=null, hoverCell=null;
+  let lastState=null;
 
-  // input
-  let dragging=null; // {piece, idx, x,y}
-  let hoverCell=null;
+  const flashes=[];
+  const recapLog=[];
+  const now=()=>performance.now();
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const randInt=n=>Math.floor(Math.random()*n);
+  const copyBoard=b=>b.map(r=>r.slice());
+  const deepClone=o=>JSON.parse(JSON.stringify(o));
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
 
   function rr(c,x,y,w,h,r){
     r=Math.max(0, Math.min(r, Math.min(w,h)/2));
@@ -220,102 +311,135 @@ body {
     const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
     return `rgba(${r},${g},${b},${a})`;
   }
+  function toastShow(title,subtitle){
+    toastBig.textContent=title; toastSmall.textContent=subtitle;
+    toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t=setTimeout(()=>toast.classList.remove("show"),900);
+  }
 
-  function emptyBoard(){return Array.from({length:GRID},()=>Array(GRID).fill(null));}
+  // audio
+  let audioCtx=null;
+  function ensureAudio(){
+    if(!soundToggle.checked) return null;
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
+    return audioCtx;
+  }
+  function beep(freq=440,dur=0.07,type="sine",gain=0.05){
+    const ac=ensureAudio(); if(!ac) return;
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.type=type; o.frequency.value=freq;
+    g.gain.value=gain;
+    o.connect(g); g.connect(ac.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+dur);
+    o.stop(ac.currentTime+dur);
+  }
+  const sfx={pick(){beep(320,0.05,"triangle",0.04);},place(){beep(220,0.06,"triangle",0.06);},bad(){beep(160,0.11,"sawtooth",0.03);},
+             cap(level=1){beep(520+level*40,0.07,"sine",0.06);beep(680+level*30,0.08,"sine",0.05);}};
 
+  // geometry
   function cellSize(){const inner=canvas.width-PAD*2; return (inner-GAP*(GRID-1))/GRID;}
   function cellToPx(x,y){const s=cellSize(); return {px:PAD+x*(s+GAP), py:PAD+y*(s+GAP), s};}
-  function getRect(){return canvas.getBoundingClientRect();}
+  function getCanvasRect(){return canvas.getBoundingClientRect();}
   function clientToCanvas(clientX,clientY){
-    const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
+    const r=getCanvasRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
     return {x:(clientX-r.left)*sx, y:(clientY-r.top)*sy};
   }
   function pointerToGrid(clientX,clientY){
-    const r=getRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
+    const r=getCanvasRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height;
     const x=(clientX-r.left)*sx, y=(clientY-r.top)*sy;
     const s=cellSize();
-    const gx=Math.floor((x-PAD+GAP/2)/(s+GAP));
-    const gy=Math.floor((y-PAD+GAP/2)/(s+GAP));
     const inside=(x>=PAD && y>=PAD && x<=canvas.width-PAD && y<=canvas.height-PAD);
     if(!inside) return null;
+    const gx=Math.floor((x-PAD+GAP/2)/(s+GAP));
+    const gy=Math.floor((y-PAD+GAP/2)/(s+GAP));
     if(gx<0||gy<0||gx>=GRID||gy>=GRID) return null;
     return {x:gx,y:gy};
   }
 
-  function newPiece(){
-    const shape=SHAPES[Math.floor(Math.random()*SHAPES.length)];
-    const color=COLORS[Math.floor(Math.random()*COLORS.length)];
-    return {shape, h:shape.length, w:shape[0].length, color, used:false};
-  }
-  function rollPieces(){ pieces=[newPiece(),newPiece(),newPiece()]; renderPieces(); }
+  // board
+  function emptyBoard(){return Array.from({length:GRID},()=>Array(GRID).fill(null));}
+  function countFilledOn(b){let n=0; for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++) if(b[y][x]!=null) n++; return n;}
+  function countFilled(){return countFilledOn(board);}
 
-  function canPlace(p,gx,gy){
-    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
-      if(!p.shape[y][x]) continue;
+  // pieces
+  function newPiece(){
+    const bigBias=clamp((heat-1.0)/1.5,0,1);
+    const shapeIdx=(Math.random()<(0.25+0.45*bigBias)) ? randInt(SHAPES.length) : randInt(Math.min(8,SHAPES.length));
+    const shape=SHAPES[shapeIdx];
+    const color=COLORS[randInt(COLORS.length)];
+    const h=shape.length, w=shape[0].length;
+    return {shape,w,h,color,used:false};
+  }
+  function rollPieces(){pieces=[newPiece(),newPiece(),newPiece()]; renderPieces(); recomputeCoach();}
+
+  function canPlace(piece,gx,gy){
+    for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
+      if(!piece.shape[y][x]) continue;
       const bx=gx+x, by=gy+y;
       if(bx<0||by<0||bx>=GRID||by>=GRID) return false;
-      if(!isPlaceable(board[by][bx])) return false;
+      if(board[by][bx]!=null) return false; // includes ENTROPY
     }
     return true;
   }
-
-  function placePiece(p,gx,gy){
-    let effective=0;
-    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
-      if(!p.shape[y][x]) continue;
-      const bx=gx+x, by=gy+y;
-      const cur=board[by][bx];
-      if(isGray(cur)){
-        const next=(cur.uses|0)-1;
-        if(next>0) board[by][bx]={t:'g', uses: next};
-        else board[by][bx]={t:'b', ttl: BLACK_TO_WALL_TURNS};
-      } else {
-        board[by][bx]={t:'c', color:p.color};
-        effective++;
-      }
+  function placePiece(piece,gx,gy){
+    for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
+      if(piece.shape[y][x]) board[gy+y][gx+x]=piece.color;
     }
-    return effective;
   }
 
-  // pockets: empties NOT connected to edge (walls behave like edge)
+  // pockets (territory)
   function pocketsOnBoard(b){
     const visited=Array.from({length:GRID},()=>Array(GRID).fill(false));
     const q=[];
-    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-
+    // 1) Board edges are always "outside"
     for(let i=0;i<GRID;i++){
-      if(isEmpty(b[0][i])){visited[0][i]=true;q.push([i,0]);}
-      if(isEmpty(b[GRID-1][i])){visited[GRID-1][i]=true;q.push([i,GRID-1]);}
-      if(isEmpty(b[i][0])){visited[i][0]=true;q.push([0,i]);}
-      if(isEmpty(b[i][GRID-1])){visited[i][GRID-1]=true;q.push([GRID-1,i]);}
-    }
+      if(b[0][i]==null){visited[0][i]=true;q.push([i,0]);}
 
+    // 2) After a short delay, Entropy tiles behave like "edge of the board":
+    // Any empty cell touching a MATURE Entropy tile is treated as outside (not capturable).
     for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
-      if(!isWall(b[y][x])) continue;
+      if(b[y][x]!==null) continue;
       for(const [dx,dy] of dirs){
         const nx=x+dx, ny=y+dy;
         if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
-        if(visited[ny][nx]) continue;
-        if(!isEmpty(b[ny][nx])) continue;
-        visited[ny][nx]=true; q.push([nx,ny]);
+        if(b[ny][nx]===ENTROPY_DEAD){
+          if(!visited[y][x]){visited[y][x]=true;q.push([x,y]);}
+          break;
+        }
+        if(b[ny][nx]===ENTROPY){
+          const born = entropyBorn[ny][nx] ?? -1;
+          const mature = (born>=0) && ((turn - born) >= ENTROPY_MATURE_TURNS);
+          if(mature){
+            if(!visited[y][x]){
+              visited[y][x]=true;
+              q.push([x,y]);
+            }
+            break;
+          }
+        }
       }
     }
-
+      if(b[GRID-1][i]==null){visited[GRID-1][i]=true;q.push([i,GRID-1]);}
+      if(b[i][0]==null){visited[i][0]=true;q.push([0,i]);}
+      if(b[i][GRID-1]==null){visited[i][GRID-1]=true;q.push([GRID-1,i]);}
+    }
     while(q.length){
       const [x,y]=q.shift();
       for(const [dx,dy] of dirs){
         const nx=x+dx, ny=y+dy;
         if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
         if(visited[ny][nx]) continue;
-        if(!isEmpty(b[ny][nx])) continue;
+        if(b[ny][nx]!=null) continue;
         visited[ny][nx]=true; q.push([nx,ny]);
       }
     }
-
     const pockets=[];
     const seen=Array.from({length:GRID},()=>Array(GRID).fill(false));
     for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
-      if(isEmpty(b[y][x]) && !visited[y][x] && !seen[y][x]){
+      if(b[y][x]==null && !visited[y][x] && !seen[y][x]){
         const stack=[[x,y]]; seen[y][x]=true;
         const cells=[];
         while(stack.length){
@@ -325,7 +449,7 @@ body {
             const nx=cx+dx, ny=cy+dy;
             if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
             if(seen[ny][nx]) continue;
-            if(!isEmpty(b[ny][nx])) continue;
+            if(b[ny][nx]!=null) continue;
             if(visited[ny][nx]) continue;
             seen[ny][nx]=true; stack.push([nx,ny]);
           }
@@ -336,36 +460,28 @@ body {
     return pockets;
   }
 
-  function tickBlackSeedsFlagged(){
-    const pockets=pocketsOnBoard(board);
-    if(!pockets.length) return 0;
-    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-    const targets=new Set();
+  function computeDifficulty(pockets, b){
+    let totalCells=0, totalEdges=0;
     for(const pocket of pockets){
+      totalCells += pocket.length;
       for(const c of pocket){
         for(const [dx,dy] of dirs){
           const nx=c.x+dx, ny=c.y+dy;
-          if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
-          if(isBlack(board[ny][nx])) targets.add(ny*GRID+nx);
+          if(nx<0||ny<0||nx>=GRID||ny>=GRID){ totalEdges += 1; continue; }
+          if(b[ny][nx]!=null) totalEdges += 1;
         }
       }
     }
-    let formed=0;
-    for(const key of targets){
-      const y=Math.floor(key/GRID), x=key%GRID;
-      const v=board[y][x];
-      if(!isBlack(v)) continue;
-      const next=(v.ttl|0)-1;
-      if(next>0) board[y][x]={t:'b', ttl: next};
-      else { board[y][x]={t:'w'}; formed++; }
-    }
-    return formed;
+    if(totalCells>=8 || totalEdges>=22) return {label:"EXPERT", mult:2.5, tier:4, cells:totalCells, edges:totalEdges};
+    if(totalCells>=5 || totalEdges>=16) return {label:"HARD", mult:1.8, tier:3, cells:totalCells, edges:totalEdges};
+    if(totalCells>=3 || totalEdges>=10) return {label:"SMART", mult:1.4, tier:2, cells:totalCells, edges:totalEdges};
+    return {label:"CLEAN", mult:1.0, tier:1, cells:totalCells, edges:totalEdges};
   }
 
-  function capture(){
-    const pockets=pocketsOnBoard(board);
-    if(!pockets.length) return {cleared:0, interior:0};
-    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  function captureOnBoard(b){
+    const pockets=pocketsOnBoard(b);
+    if(!pockets.length) return {cleared:0, interior:0, clearedCells:[], pockets, diff:null};
+    const diff=computeDifficulty(pockets,b);
     const boundary=new Set();
     let interior=0;
     for(const pocket of pockets){
@@ -374,255 +490,653 @@ body {
         for(const [dx,dy] of dirs){
           const nx=cell.x+dx, ny=cell.y+dy;
           if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
-          if(board[ny][nx]!=null) boundary.add(ny*GRID+nx);
+          if(b[ny][nx]!=null) boundary.add(ny*GRID+nx);
         }
       }
     }
-    let cleared=0;
+    const clearedCells=[];
     for(const key of boundary){
       const y=Math.floor(key/GRID), x=key%GRID;
-      if(isColor(board[y][x])){ board[y][x]=null; cleared++; }
+      clearedCells.push({x,y});
+      if(b[y][x]!==ENTROPY) b[y][x]=null; // entropy is permanent
     }
-    return {cleared, interior};
+    return {cleared:boundary.size, interior, clearedCells, pockets, diff};
   }
 
-  function updateHUD(){
-    scoreEl.textContent=score;
-    bestEl.textContent=best;
+  function applyCapture(){
+    const result=captureOnBoard(board);
+    if(result.cleared>0) flashes.push({cells:result.clearedCells,t0:now()});
+    return result;
   }
 
-
-  function anyMoveAvailable(){
-    for(const p of pieces){
-      if(p.used) continue;
-      for(let y=0;y<GRID;y++){
-        for(let x=0;x<GRID;x++){
-          if(canPlace(p,x,y)) return true;
+  // entropy placement
+  
+  function bumpEntropyUseFromCapture(cap){
+    // Count Entropy tiles bordering captured pockets and increment their exhaustion counters.
+    if(!cap || !cap.pockets || !cap.pockets.length) return 0;
+    const touched = new Set();
+    for(const pocket of cap.pockets){
+      for(const c of pocket){
+        for(const [dx,dy] of dirs){
+          const nx=c.x+dx, ny=c.y+dy;
+          if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+          if(board[ny][nx]===ENTROPY){
+            touched.add(ny*GRID+nx);
+          }
         }
       }
     }
-    return false;
+    for(const key of touched){
+      const y=Math.floor(key/GRID), x=key%GRID;
+      const next = Math.min(ENTROPY_MAX_USES, (entropyUse[y][x]||0) + 1);
+      entropyUse[y][x]=next;
+      // When uses are exhausted, the tile becomes a permanent black square
+      if(next>=ENTROPY_MAX_USES){
+        board[y][x]=ENTROPY_DEAD;
+      }
+    }
+    return touched.size;
+  }
+function spawnEntropyFromPockets(pockets, count){
+    if(!pockets || !pockets.length || count<=0) return [];
+    const cells=[];
+    for(const p of pockets) for(const c of p) cells.push(c);
+    if(!cells.length) return [];
+    const cx=cells.reduce((s,c)=>s+c.x,0)/cells.length;
+    const cy=cells.reduce((s,c)=>s+c.y,0)/cells.length;
+    cells.sort((a,b)=>((a.x-cx)**2+(a.y-cy)**2)-((b.x-cx)**2+(b.y-cy)**2));
+    const placed=[];
+    const step=Math.max(1, Math.floor(cells.length/(count*2)));
+    for(let i=0;i<cells.length && placed.length<count;i+=step){
+      const c=cells[i];
+      if(board[c.y][c.x]===null){board[c.y][c.x]=ENTROPY; entropyBorn[c.y][c.x]=turn; entropyUse[c.y][c.x]=0; placed.push(c);}
+    }
+    for(let i=0;i<cells.length && placed.length<count;i++){
+      const c=cells[i];
+      if(board[c.y][c.x]===null){board[c.y][c.x]=ENTROPY; entropyBorn[c.y][c.x]=turn; entropyUse[c.y][c.x]=0; placed.push(c);}
+    }
+    return placed;
   }
 
-  const banner=document.getElementById("banner");
-  const bannerTitle=document.getElementById("bannerTitle");
-  const bannerText=document.getElementById("bannerText");
-  const restartBtn=document.getElementById("restartBtn");
-  let gameOver=false;
+  // flags preview if place
+  function pocketsIfPlaced(piece,gx,gy){
+    if(!canPlace(piece,gx,gy)) return [];
+    const b2=copyBoard(board);
+    for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
+      if(piece.shape[y][x]) b2[gy+y][gx+x]=piece.color;
+    }
+    const pockets = pocketsOnBoard(b2);
+    // Safety filter: never return any cell that isn't truly empty on the live board
+    // (prevents flags appearing on Entropy or any occupied tile even if something upstream glitches)
+    for(const p of pockets){
+      for(let i=p.length-1;i>=0;i--){
+        const c=p[i];
+        if(board[c.y][c.x]!==null || b2[c.y][c.x]!==null) p.splice(i,1);
+      }
+    }
+    return pockets.filter(p=>p.length>0);
+  }
+  function pocketsInteriorCount(pockets){let n=0; for(const p of (pockets||[])) n+=p.length; return n;}
 
-  function setGameOver(on){
-    gameOver=!!on;
-    if(banner) banner.style.display = on ? "block" : "none";
+  function drawFlagCell(cellX, cellY, scale=1.0){
+    // Never draw flags on occupied cells (including Entropy)
+    if(board[cellY][cellX]!==null) return;
+    // Safety: never draw a flag on an occupied cell (including Entropy)
+    if(board[cellY][cellX]!==null) return;
+    const s=cellSize();
+    const {px,py}=cellToPx(cellX, cellY);
+    const baseX=px+s*0.55;
+    const baseY=py+s*0.78;
+    const poleH=s*0.38*scale;
+    const flagW=s*0.22*scale;
+    const flagH=s*0.14*scale;
+
+    ctx.strokeStyle="rgba(255,255,255,.55)";
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(baseX,baseY); ctx.lineTo(baseX, baseY-poleH); ctx.stroke();
+
+    ctx.fillStyle="rgba(248,113,113,.95)";
+    ctx.beginPath();
+    ctx.moveTo(baseX, baseY-poleH);
+    ctx.lineTo(baseX+flagW, baseY-poleH+flagH*0.45);
+    ctx.lineTo(baseX, baseY-poleH+flagH);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle="rgba(0,0,0,.25)";
+    rr(ctx, baseX-6*scale, baseY-4*scale, 12*scale, 6*scale, 3*scale); ctx.fill();
+  }
+  function drawFlagsForPockets(pockets){
+    for(const pocket of pockets){
+      const sc = pocket.length>14 ? 0.82 : 0.92;
+      for(const c of pocket){
+        if(board[c.y][c.x]!==null) continue;
+        drawFlagCell(c.x,c.y,sc);
+      }
+    }
+  }
+  function drawUnstableWarning(){
+    ctx.save();
+    ctx.globalAlpha=0.95;
+    ctx.fillStyle="rgba(255,255,255,.92)";
+    ctx.font="800 14px system-ui,-apple-system,Segoe UI,Roboto,Arial";
+    ctx.fillText("⚠ Structure unstable", PAD+10, PAD-2);
+    ctx.restore();
   }
 
+  // zones + history
+  function zoneFromCell(x,y){
+    const hx=x<GRID/2?0:1;
+    const hy=y<GRID/2?0:2;
+    return hx+hy; // 0,1,2,3
+  }
+  function countRecentExperts(){
+    let c=0;
+    for(let i=Math.max(0,capHistory.length-EXPERT_IN_LAST_N); i<capHistory.length; i++){
+      if(capHistory[i].tier===EXPERT_TIER) c++;
+    }
+    return c;
+  }
 
+  // coach
+  function updateCoachAssist(){
+    const byTurns=clamp(1 - Math.max(0,turn-8)/38, 0, 1);
+    const byScore=clamp(1 - score/2200, 0, 1);
+    coachAssist=clamp(Math.min(byTurns,byScore),0,1);
+    coachHelpEl.textContent=Math.round(coachAssist*100)+"%";
+    coachToggle.disabled = coachAssist<=0.001;
+    if(coachAssist<=0.001) coachToggle.checked=false;
+  }
+  function scoreMoveOnBoard(tempBoard){
+    const after=copyBoard(tempBoard);
+    const cap=captureOnBoard(after);
+    const open=GRID*GRID - countFilledOn(after);
+    const diffMult = cap.diff ? cap.diff.mult : 1.0;
+    return (cap.cleared*220 + cap.interior*3) * diffMult + open*0.6;
+  }
+  function computeCoachSuggestion(){
+    if(!coachToggle.checked || coachAssist<=0.001) return null;
+    const cands=[];
+    for(let idx=0; idx<pieces.length; idx++){
+      const p=pieces[idx]; if(p.used) continue;
+      for(let gy=0; gy<GRID; gy++) for(let gx=0; gx<GRID; gx++){
+        if(!canPlace(p,gx,gy)) continue;
+        const b2=copyBoard(board);
+        for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++) if(p.shape[y][x]) b2[gy+y][gx+x]=p.color;
+        const val=scoreMoveOnBoard(b2);
+        const pockets=pocketsOnBoard(b2);
+        const quality = pockets.length ? "CAPTURE" : "SAFE";
+        cands.push({idx,gx,gy,val,quality});
+      }
+    }
+    if(!cands.length) return null;
+    cands.sort((a,b)=>b.val-a.val);
+    return cands[0];
+  }
+  function setCoachText(){
+    if(!coachToggle.checked){ coachWhyEl.innerHTML="Coach is <b>off</b>."; return; }
+    if(coachAssist<=0.001){ coachWhyEl.innerHTML="Coach has faded out — you’ve got it."; return; }
+    if(!coachSuggestion){ coachWhyEl.innerHTML="No suggestion this turn."; return; }
+    const why = coachSuggestion.quality==="CAPTURE"
+      ? "This drop creates a <b>closed pocket</b>. Bigger/tighter pockets score more — but huge pockets may create <b>Entropy</b>."
+      : "No capture here — but it keeps space open and avoids trapping yourself.";
+    coachWhyEl.innerHTML = `<div class="chip" style="display:inline-block;margin-bottom:8px">${coachSuggestion.quality==="CAPTURE"?"Capture Move":"Safe Move"}</div>
+      <div style="margin-bottom:6px">${why}</div>
+      <div>Suggested drop (top-left): <b>(${coachSuggestion.gx+1}, ${coachSuggestion.gy+1})</b>.</div>`;
+  }
+  function pushRecapLine(line){
+    recapLog.unshift(line);
+    while(recapLog.length>4) recapLog.pop();
+    coachRecapEl.innerHTML = recapLog.map((x,i)=>`<div style="margin-bottom:${i===recapLog.length-1?0:6}px">• ${x}</div>`).join("");
+  }
+  function resetRecap(){recapLog.length=0; coachRecapEl.textContent="Make a move to see a recap.";}
+  function recomputeCoach(){
+    updateCoachAssist();
+    if(coachAssist>0.001 && coachToggle.checked){
+      coachSuggestion = (Math.random()<coachAssist) ? computeCoachSuggestion() : null;
+    } else coachSuggestion=null;
+    renderPieces();
+    setCoachText();
+  }
+
+  // pieces UI
   function renderPieces(){
     piecesEl.innerHTML="";
     pieces.forEach((p,idx)=>{
       const slot=document.createElement("div");
       slot.className="slot"+(p.used?" used":"");
+      if(coachSuggestion && coachSuggestion.idx===idx && !p.used) slot.classList.add("reco");
+
       const mini=document.createElement("canvas");
-      mini.className="mini";
-      mini.width=160; mini.height=90;
+      mini.width=120; mini.height=80;
+      mini.style.width="100%"; mini.style.height="80px";
+      mini.style.borderRadius="12px";
+      mini.style.background="rgba(27,39,64,.22)";
+      mini.style.border="1px solid rgba(36,53,86,.6)";
       slot.appendChild(mini);
 
       const m=mini.getContext("2d");
-      const block=16, gap=5;
-      const w=p.w*block+(p.w-1)*gap, h=p.h*block+(p.h-1)*gap;
-      const ox=(mini.width-w)/2, oy=(mini.height-h)/2;
+      const block=14, gap=4;
+      const w=p.w*block+(p.w-1)*gap;
+      const h=p.h*block+(p.h-1)*gap;
+      const ox=(mini.width-w)/2;
+      const oy=(mini.height-h)/2;
       for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
         if(!p.shape[y][x]) continue;
-        rr(m, ox+x*(block+gap), oy+y*(block+gap), block, block, 6);
+        const bx=ox+x*(block+gap);
+        const by=oy+y*(block+gap);
+        rr(m, bx,by,block,block,5);
         m.fillStyle=p.color; m.fill();
       }
 
-  // === Drag handling (mobile-safe): track pointer globally ===
-  let activePointerId=null;
-
-  function onMove(e){
-    if(!dragging) return;
-    if(activePointerId!==null && e.pointerId!==activePointerId) return;
-    const pt=clientToCanvas(e.clientX,e.clientY);
-    dragging.x=pt.x; dragging.y=pt.y;
-    hoverCell=pointerToGrid(e.clientX,e.clientY);
-    if(e.cancelable) e.preventDefault();
-  }
-
-  function endDrag(e){
-    if(!dragging) return;
-    if(activePointerId!==null && e.pointerId!==activePointerId) return;
-
-    const p=dragging.piece;
-    const drop=pointerToGrid(e.clientX,e.clientY);
-    if(!drop || !canPlace(p,drop.x,drop.y)){
-      dragging=null; hoverCell=null; activePointerId=null;
-      if(e.cancelable) e.preventDefault();
-      return;
-    }
-
-    const effective = placePiece(p, drop.x, drop.y);
-    p.used=true;
-
-    // score for placed blocks
-    score += effective*6;
-
-    // black seeds tick if pockets now exist
-    tickBlackSeedsFlagged();
-
-    // capture + score
-    const cap=capture();
-    if(cap.cleared>0){
-      const pts = Math.round(cap.cleared*26 + cap.interior*3);
-      score += pts;
-    }
-
-    if(pieces.every(pp=>pp.used)) rollPieces(); else renderPieces();
-
-    if(score>best){best=score; localStorage.setItem("echo_grid_best_minimal", String(best));}
-    updateHUD();
-
-    // game over check
-    if(!anyMoveAvailable()){
-      setGameOver(true);
-    }
-
-    dragging=null; hoverCell=null; activePointerId=null;
-    if(e.cancelable) e.preventDefault();
-  }
-
-  window.addEventListener("pointermove", onMove, {passive:false});
-  window.addEventListener("pointerup", endDrag, {passive:false});
-  window.addEventListener("pointercancel", endDrag, {passive:false});
-
-  // === Touch fallback (some mobile browsers are flaky with PointerEvents on nested elements) ===
-  let activeTouchId=null;
-
-  function getTouchById(touchList, id){
-    for(const t of touchList){ if(t.identifier===id) return t; }
-    return null;
-  }
-
-  function touchMove(e){
-    if(!dragging) return;
-    const t = activeTouchId===null ? (e.touches[0]||null) : getTouchById(e.touches, activeTouchId);
-    if(!t) return;
-    const pt=clientToCanvas(t.clientX,t.clientY);
-    dragging.x=pt.x; dragging.y=pt.y;
-    hoverCell=pointerToGrid(t.clientX,t.clientY);
-    if(e.cancelable) e.preventDefault();
-  }
-
-  function touchEnd(e){
-    if(!dragging) return;
-    const t = activeTouchId===null ? (e.changedTouches[0]||null) : getTouchById(e.changedTouches, activeTouchId);
-    const cx = t ? t.clientX : 0;
-    const cy = t ? t.clientY : 0;
-    // call endDrag with a pointer-like object
-    endDrag({pointerId: activePointerId??0, clientX: cx, clientY: cy, cancelable: true, preventDefault: ()=>{}});
-    activeTouchId=null;
-    if(e.cancelable) e.preventDefault();
-  }
-
-  window.addEventListener("touchmove", touchMove, {passive:false});
-  window.addEventListener("touchend", touchEnd, {passive:false});
-  window.addEventListener("touchcancel", touchEnd, {passive:false});
-      const label=document.createElement("div");
-      label.className="slotLabel";
-      label.textContent = `${p.w}×${p.h}`;
-      slot.appendChild(label);
+      const meta=document.createElement("div");
+      meta.className="meta";
+      const chip1=document.createElement("span");
+      chip1.className="chip";
+      chip1.textContent = `${p.w}×${p.h}`;
+      meta.appendChild(chip1);
+      slot.appendChild(meta);
 
       slot.addEventListener("pointerdown",(e)=>{
-        const dbg=document.getElementById("dbg"); if(dbg){dbg.style.display="block"; dbg.textContent="pointerdown";}
         if(p.used) return;
-        if(gameOver) return;
-        activePointerId = e.pointerId;
-        try{ slot.setPointerCapture(e.pointerId); }catch(err){}
+        canvas.setPointerCapture(e.pointerId);
         const pt=clientToCanvas(e.clientX,e.clientY);
         dragging={piece:p, idx, x:pt.x, y:pt.y};
         hoverCell=pointerToGrid(e.clientX,e.clientY);
-        if(e.cancelable) e.preventDefault();
+        ensureAudio(); sfx.pick();
       });
-
-      slot.addEventListener("touchstart",(e)=>{
-        if(p.used) return; if(gameOver) return;
-        const t=e.touches[0]; if(!t) return;
-        activeTouchId=t.identifier;
-        const pt=clientToCanvas(t.clientX,t.clientY);
-        dragging={piece:p, idx, x:pt.x, y:pt.y};
-        hoverCell=pointerToGrid(t.clientX,t.clientY);
-        const dbg=document.getElementById("dbg"); if(dbg){dbg.style.display="block"; dbg.textContent="touchstart";}
-        if(e.cancelable) e.preventDefault();
-      }, {passive:false});
 
       piecesEl.appendChild(slot);
     });
   }
 
-  
-  if(restartBtn){ restartBtn.addEventListener("click", ()=>{ newGame(); }); }
-
-  function seed(){
-    const seed=4+Math.floor(Math.random()*4);
-    for(let i=0;i<seed;i++){
-      const x=Math.floor(Math.random()*GRID), y=Math.floor(Math.random()*GRID);
-      if(isEmpty(board[y][x])) board[y][x]={t:'c', color: COLORS[Math.floor(Math.random()*COLORS.length)]};
-    }
-    let placed=0, tries=0;
-    while(placed<GRAY_COUNT && tries<1000){
-      tries++;
-      const x=Math.floor(Math.random()*GRID), y=Math.floor(Math.random()*GRID);
-      if(isEmpty(board[y][x])){ board[y][x]={t:'g', uses: GRAY_START_USES}; placed++; }
-    }
-  }
-
-  function drawPieceGhost(p,gx,gy,ok){
+  // drawing helpers
+  function drawPieceOnGrid(piece,gx,gy,opts={}){
     const s=cellSize();
-    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
-      if(!p.shape[y][x]) continue;
+    const inset=opts.inset ?? 2;
+    const alpha=opts.alpha ?? 0.18;
+    const outline=opts.outline ?? 0.25;
+    const tintMul=opts.tintMul ?? 1.2;
+    for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
+      if(!piece.shape[y][x]) continue;
       const bx=gx+x, by=gy+y;
       if(bx<0||by<0||bx>=GRID||by>=GRID) continue;
       const {px,py}=cellToPx(bx,by);
-      rr(ctx, px+2,py+2,s-4,s-4,10);
-      ctx.fillStyle=hexToRgba(p.color, ok?0.25:0.10);
-      ctx.fill();
-      if(ok){
-        rr(ctx, px+2,py+2,s-4,s-4,10);
-        ctx.strokeStyle="rgba(255,255,255,.22)";
-        ctx.lineWidth=2;
-        ctx.stroke();
+      rr(ctx, px+inset,py+inset, s-inset*2, s-inset*2, 9);
+      ctx.fillStyle=hexToRgba(piece.color, alpha*tintMul); ctx.fill();
+      if(outline>0){
+        rr(ctx, px+inset,py+inset, s-inset*2, s-inset*2, 9);
+        ctx.strokeStyle="rgba(255,255,255,"+outline+")";
+        ctx.lineWidth=2; ctx.stroke();
       }
     }
   }
 
+  function anyMoveAvailable(){
+    const active=pieces.filter(p=>!p.used);
+    if(active.length===0) return true;
+    for(const p of active) for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++) if(canPlace(p,x,y)) return true;
+    return false;
+  }
+
+  // input
+  canvas.addEventListener("pointermove",(e)=>{
+    if(!dragging) return;
+    const pt=clientToCanvas(e.clientX,e.clientY);
+    dragging.x=pt.x; dragging.y=pt.y;
+    hoverCell=pointerToGrid(e.clientX,e.clientY);
+  });
+
+  canvas.addEventListener("pointerup",(e)=>{
+    if(!dragging) return;
+    const p=dragging.piece;
+    const drop=pointerToGrid(e.clientX,e.clientY);
+    if(!drop || !canPlace(p,drop.x,drop.y)){
+      sfx.bad(); dragging=null; hoverCell=null; return;
+    }
+
+    // snapshot
+    lastState={board:copyBoard(board), pieces:deepClone(pieces), score,best,turn,heat,combo,comboMult,repeatCount,lastCapTier,lastCapZone,capHistory:deepClone(capHistory), entropyUse:copyBoard(entropyUse), lastDifficulty,coachAssist};
+    btnUndo.disabled=false;
+
+    placePiece(p,drop.x,drop.y);
+    p.used=true;
+    sfx.place();
+
+    let blocks=0;
+    for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++) if(p.shape[y][x]) blocks++;
+    score += blocks*6; // placement points
+
+    const cap=applyCapture();
+    if(cap.cleared>0){
+      const entropyTouched = bumpEntropyUseFromCapture(cap);
+
+      const diff = cap.diff || {label:"CLEAN", mult:1.0, tier:1};
+      const zone = zoneFromCell(drop.x, drop.y);
+      const interior = cap.interior;
+
+      // combo growth vs decay
+      const samePattern = (lastCapTier===diff.tier && lastCapZone===zone);
+      if(!samePattern){
+        repeatCount=0;
+        combo += 1;
+        comboMult = Math.min(6, Math.max(1, comboMult + 1));
+      } else {
+        repeatCount += 1;
+        if(repeatCount===1){
+          // hold
+        } else if(repeatCount===2){
+          comboMult = Math.max(1, comboMult * 0.85);
+        } else {
+          comboMult = Math.max(1, comboMult * 0.70);
+        }
+      }
+
+      lastCapTier=diff.tier;
+      lastCapZone=zone;
+      capHistory.push({tier: diff.tier, zone, interior});
+      if(capHistory.length>12) capHistory.shift();
+
+      // entropy trigger
+      const recentExperts = countRecentExperts();
+      const unstable = (interior >= LARGE_CAPTURE_THRESHOLD) || (diff.tier===EXPERT_TIER && recentExperts >= EXPERT_COUNT_TRIGGER);
+      if(unstable){
+        const nEntropy = Math.floor(interior / ENTROPY_PER_CELLS);
+        const placed = spawnEntropyFromPockets(cap.pockets, nEntropy);
+        if(placed.length){
+          toastShow("⚠ STRUCTURE UNSTABLE", `Entropy formed: ${placed.length}`);
+          pushRecapLine(`⚠ <b>Structure unstable</b> → Entropy formed: <b>${placed.length}</b>`);
+        }
+      }
+
+      lastDifficulty=diff.label;
+      // Entropy saturation: touching Entropy reduces value and prevents combo growth exploits
+      // Count how many Entropy tiles border the captured pockets and increment their use counters
+      let entropyTouches = 0;
+      for(const pocket of (cap.pockets||[])){
+        for(const c of pocket){
+          for(const [dx,dy] of dirs){
+            const nx=c.x+dx, ny=c.y+dy;
+            if(nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+            if(board[ny][nx]===ENTROPY){
+              entropyTouches++;
+              entropyUse[ny][nx] = (entropyUse[ny][nx]||0) + 1;
+            }
+          }
+        }
+      }
+      // If a capture relied on Entropy, cap combo growth (combo can exist but won't increase from Entropy-assisted captures)
+      const entropyAssisted = entropyTouches>0;
+      if(entropyAssisted && combo>0){
+        // gently clamp (never increases from this capture)
+        comboMult = Math.min(comboMult, comboMult);
+      }
+      // Score decay: more entropy touches => less value; never below 30%
+      const entropyFactor = entropyAssisted ? Math.max(0.30, 1 - entropyTouches*0.12) : 1.0;
+
+      const base = (cap.cleared*26 + cap.interior*3) * entropyFactor;
+      const pts = Math.round(base * diff.mult * comboMult);
+      score += pts;
+
+      sfx.cap(diff.tier);
+      const comboTxt="x"+(Math.round(comboMult*10)/10).toFixed(1);
+      toastShow(`${diff.label} CAPTURE  ${comboTxt}`, `+${pts} (cleared ${cap.cleared})`);
+      let tag = samePattern ? "repeat" : "new";
+      if(samePattern && repeatCount>=2) tag="decay";
+      pushRecapLine(`<b>${diff.label}</b> capture → cleared <b>${cap.cleared}</b> → <b>${comboTxt}</b> (${tag}) (+${pts})`);
+    } else {
+      if(combo>0) pushRecapLine(`<b>No capture</b> → combo reset (was x${(Math.round(comboMult*10)/10).toFixed(1)})`);
+      combo=0; comboMult=1.0; repeatCount=0; lastCapTier=null; lastCapZone=null;
+      lastDifficulty="—";
+      pushRecapLine(`<b>Placed</b> ${blocks} blocks → no capture`);
+    }
+
+    heat=clamp(1.0 + (countFilled()/90), 1.0, 2.5);
+    turn++;
+
+    if(pieces.every(pp=>pp.used)) rollPieces(); else recomputeCoach();
+    if(score>best){best=score; localStorage.setItem("echo_grid_best_stable_entropy",String(best));}
+
+    updateHUD();
+    dragging=null; hoverCell=null;
+
+    if(!anyMoveAvailable()){
+      overlay.style.display="flex";
+      sfx.bad();
+    }
+  });
+
+  canvas.addEventListener("lostpointercapture",()=>{dragging=null; hoverCell=null;});
+
+  // undo/new
+  function updateHUD(){
+    scoreEl.textContent=score;
+    bestEl.textContent=best;
+    heatEl.textContent=heat.toFixed(2);
+    comboEl.textContent="x"+(Math.round(comboMult*10)/10).toFixed(1);
+    lastEl.textContent=lastDifficulty;
+  }
+
+  function restoreUndo(){
+    if(!lastState) return;
+    board=copyBoard(lastState.board);
+    pieces=deepClone(lastState.pieces);
+    score=lastState.score; best=lastState.best; turn=lastState.turn; heat=lastState.heat;
+    combo=lastState.combo ?? 0; comboMult=lastState.comboMult ?? 1.0;
+    repeatCount=lastState.repeatCount ?? 0;
+    lastCapTier=lastState.lastCapTier ?? null;
+    lastCapZone=lastState.lastCapZone ?? null;
+    capHistory.length=0; if(Array.isArray(lastState.capHistory)) lastState.capHistory.forEach(x=>capHistory.push(x));
+    if(lastState.entropyUse){
+      for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++) entropyUse[y][x]=lastState.entropyUse[y][x];
+    }
+    lastDifficulty=lastState.lastDifficulty ?? "—";
+    coachAssist=lastState.coachAssist ?? 1.0;
+
+    overlay.style.display="none";
+    lastState=null; btnUndo.disabled=true;
+    resetRecap(); pushRecapLine(`<b>Undo</b> restored the previous move.`);
+    renderPieces(); recomputeCoach(); updateHUD();
+  }
+
+  function newGame(){
+    for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){ entropyUse[y][x]=0; entropyBorn[y][x]=-1; }
+    board=emptyBoard();
+    score=0; turn=0; heat=1.0;
+    combo=0; comboMult=1.0;
+    repeatCount=0; lastCapTier=null; lastCapZone=null; capHistory.length=0;
+    lastDifficulty="—";
+    overlay.style.display="none";
+    lastState=null; btnUndo.disabled=true;
+    resetRecap();
+    coachToggle.disabled=false; coachToggle.checked=true;
+    coachAssist=1.0; coachSuggestion=null;
+
+    // seed a few blocks (but not too many)
+    const seed=5+randInt(4);
+    for(let i=0;i<seed;i++){
+      const x=randInt(GRID), y=randInt(GRID);
+      if(board[y][x]==null) board[y][x]=COLORS[randInt(COLORS.length)];
+    }
+    rollPieces(); updateHUD();
+  }
+
+  btnNew.addEventListener("click", newGame);
+  btnAgain.addEventListener("click", newGame);
+  btnUndo.addEventListener("click", restoreUndo);
+  coachToggle.addEventListener("change", ()=>recomputeCoach());
+
+  // render loop
   function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     const s=cellSize();
+    const t=now();
 
+    // grid + blocks
     for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
       const {px,py}=cellToPx(x,y);
-      rr(ctx, px,py,s,s,12);
+      rr(ctx, px,py,s,s,10);
       ctx.fillStyle="rgba(27,39,64,.62)"; ctx.fill();
       ctx.strokeStyle="rgba(255,255,255,.14)"; ctx.lineWidth=1; ctx.stroke();
 
       const v=board[y][x];
-      if(!v) continue;
+      if(v){
+        rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,9);
+        if(v===ENTROPY_DEAD){
+          // exhausted entropy: black permanent square
+          ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fill();
+          rr(ctx, px+2,py+2,s-4,s-4,9);
+          ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fill();
+          rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,9);
+          ctx.strokeStyle='rgba(255,255,255,.10)'; ctx.lineWidth=1; ctx.stroke();
+        } else if(v===ENTROPY){
+          // Visual exhaustion based on use count:
+          // 0: cracks, 1: heavier cracks, 2: dust, 3: void
+          const u = entropyUse[y][x]||0;
+          const stage = (u>=3)?3:(u>=2)?2:(u>=1)?1:0;
 
-      rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,11);
+          ctx.fillStyle=ENTROPY_COLOR; ctx.fill();
 
-      if(isColor(v)){
-        ctx.fillStyle=v.color; ctx.fill();
-      } else if(isGray(v)){
-        ctx.fillStyle="rgba(170,180,200,.75)"; ctx.fill();
-        ctx.fillStyle="rgba(10,14,22,.85)";
-        ctx.font=`900 ${Math.floor(s*0.38)}px system-ui`;
-        ctx.textAlign="center"; ctx.textBaseline="middle";
-        ctx.fillText(String(v.uses), px+s/2, py+s/2);
-      } else if(isBlack(v)){
-        ctx.fillStyle="rgba(12,12,14,.92)"; ctx.fill();
-        ctx.fillStyle="rgba(255,255,255,.78)";
-        ctx.font=`900 ${Math.floor(s*0.36)}px system-ui`;
-        ctx.textAlign="center"; ctx.textBaseline="middle";
-        ctx.fillText(String(v.ttl), px+s/2, py+s/2);
-      } else if(isWall(v)){
-        ctx.fillStyle="rgba(0,0,0,.96)"; ctx.fill();
-        rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4
+          // stronger base vignette so the effect is obvious
+          rr(ctx, px+2,py+2,s-4,s-4,9);
+          ctx.fillStyle="rgba(0,0,0,.18)"; ctx.fill();
+
+          if(stage===0){
+            // subtle cracks
+            ctx.strokeStyle="rgba(255,255,255,.16)";
+            ctx.lineWidth=1.2;
+            ctx.beginPath();
+            ctx.moveTo(px+6, py+s*0.30); ctx.lineTo(px+s*0.70, py+s-6);
+            ctx.moveTo(px+s*0.22, py+8); ctx.lineTo(px+s-8, py+s*0.58);
+            ctx.stroke();
+          } else if(stage===1){
+            // heavier cracks
+            ctx.strokeStyle="rgba(255,255,255,.22)";
+            ctx.lineWidth=1.35;
+            ctx.beginPath();
+            ctx.moveTo(px+6, py+s*0.28); ctx.lineTo(px+s*0.78, py+s-6);
+            ctx.moveTo(px+s*0.16, py+8); ctx.lineTo(px+s-8, py+s*0.64);
+            ctx.moveTo(px+s*0.50, py+6); ctx.lineTo(px+10, py+s-10);
+            ctx.stroke();
+          } else if(stage===2){
+            // dust: speckles + haze
+            ctx.fillStyle="rgba(255,255,255,.10)";
+            for(let i=0;i<16;i++){
+              const dx = (i*17)%Math.floor(s-12);
+              const dy = (i*29)%Math.floor(s-12);
+              rr(ctx, px+6+dx, py+6+dy, 2.4, 2.4, 1.2);
+              ctx.fill();
+            }
+            rr(ctx, px+2,py+2,s-4,s-4,9);
+            ctx.fillStyle="rgba(255,255,255,.05)"; ctx.fill();
+          } else {
+            // void: dark core with faint ring
+            rr(ctx, px+2,py+2,s-4,s-4,9);
+            ctx.fillStyle="rgba(0,0,0,.45)"; ctx.fill();
+            rr(ctx, px+7,py+7,s-14,s-14,7);
+            ctx.fillStyle="rgba(0,0,0,.35)"; ctx.fill();
+            rr(ctx, px+2,py+2,s-4,s-4,9);
+            ctx.strokeStyle="rgba(255,255,255,.14)";
+            ctx.lineWidth=1;
+            ctx.stroke();
+          }
+
+          // optional tiny indicator dot for debugging (kept subtle)
+          if(u>0){
+            ctx.fillStyle="rgba(255,255,255,.18)";
+            ctx.beginPath();
+            ctx.arc(px+s-10, py+10, 3.2, 0, Math.PI*2);
+            ctx.fill();
+          }
+
+          
+          // Remaining "uses" indicator (how many more entropy-assisted captures this tile can contribute to)
+          const remaining = Math.max(0, ENTROPY_MAX_USES - (entropyUse[y][x]||0));
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          ctx.fillStyle = remaining===0 ? "rgba(255,255,255,.30)" : "rgba(255,255,255,.55)";
+          ctx.font = "900 12px system-ui,-apple-system,Segoe UI,Roboto,Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          // small badge
+          const bx = px + s - 14, by = py + 14;
+          rr(ctx, bx-10, by-9, 20, 18, 7);
+          ctx.fillStyle = "rgba(0,0,0,.28)";
+          ctx.fill();
+          ctx.fillStyle = remaining===0 ? "rgba(255,255,255,.30)" : "rgba(255,255,255,.72)";
+          ctx.fillText(String(remaining), bx, by);
+          ctx.restore();
+rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,9);
+          ctx.strokeStyle="rgba(255,255,255,.18)"; ctx.lineWidth=1; ctx.stroke();
+        } else {
+          ctx.fillStyle=v; ctx.fill();
+        }
+      }
+    }
+
+    // coach preview + flags
+    if(coachToggle.checked && coachSuggestion && coachAssist>0.001){
+      const p=pieces[coachSuggestion.idx];
+      if(p && !p.used){
+        const pulse=0.55+0.45*Math.sin(t/160);
+        const alpha=(coachSuggestion.quality==="CAPTURE"?0.17:0.12)*coachAssist*pulse;
+        const outline=(coachSuggestion.quality==="CAPTURE"?0.38:0.20)*coachAssist*pulse;
+        drawPieceOnGrid(p, coachSuggestion.gx, coachSuggestion.gy, {alpha, outline, inset:2, tintMul:0.9});
+        const pockets=pocketsIfPlaced(p, coachSuggestion.gx, coachSuggestion.gy);
+        drawFlagsForPockets(pockets);
+        if(pocketsInteriorCount(pockets) >= LARGE_CAPTURE_THRESHOLD) drawUnstableWarning();
+      }
+    }
+
+    // sticky hover ghost + flags
+    if(dragging && hoverCell){
+      const p=dragging.piece;
+      const ok=canPlace(p,hoverCell.x,hoverCell.y);
+      drawPieceOnGrid(p, hoverCell.x, hoverCell.y, {alpha: ok?0.18:0.10, outline: ok?0.30:0.0, inset:2, tintMul:1.25});
+      if(ok){
+        const pockets=pocketsIfPlaced(p, hoverCell.x, hoverCell.y);
+        drawFlagsForPockets(pockets);
+        if(pocketsInteriorCount(pockets) >= LARGE_CAPTURE_THRESHOLD) drawUnstableWarning();
+      }
+    }
+
+    // flash effect for cleared border blocks
+    for(let i=flashes.length-1;i>=0;i--){
+      const f=flashes[i]; const dt=t-f.t0, life=210;
+      if(dt>life){flashes.splice(i,1); continue;}
+      const a=0.30*(1-dt/life);
+      for(const c of f.cells){
+        const {px,py}=cellToPx(c.x,c.y);
+        rr(ctx, px+1.5,py+1.5,s-3,s-3,9);
+        ctx.fillStyle=`rgba(255,255,255,${a})`; ctx.fill();
+      }
+    }
+
+    // finger-follow piece
+    if(dragging){
+      const p=dragging.piece;
+      const px=dragging.x, py=dragging.y;
+      const block=Math.min(30, s*0.62);
+      const gap=4;
+      const w=p.w*block+(p.w-1)*gap;
+      const h=p.h*block+(p.h-1)*gap;
+      const ox=px-w/2, oy=py-h/2;
+      for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
+        if(!p.shape[y][x]) continue;
+        const bx=ox+x*(block+gap), by=oy+y*(block+gap);
+        rr(ctx, bx,by,block,block,7);
+        ctx.fillStyle=p.color; ctx.fill();
+        ctx.strokeStyle="rgba(255,255,255,.10)"; ctx.lineWidth=1; ctx.stroke();
+      }
+    }
+  }
+
+  function tick(){ draw(); requestAnimationFrame(tick); }
+
+  // init
+  best = Number(localStorage.getItem("echo_grid_best_stable_entropy")||"0") || 0;
+  newGame();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
