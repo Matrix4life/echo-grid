@@ -25,6 +25,16 @@
   .toggleRow{display:flex;gap:10px}
   .toggle{flex:1;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:12px;border:1px solid rgba(36,53,86,.9);background:rgba(27,39,64,.45);color:var(--muted);font-size:13px;user-select:none}
   .toggle input{accent-color:#8ab4ff}
+
+  .tuning{margin-top:10px;border:1px solid rgba(36,53,86,.9);border-radius:14px;background:rgba(27,39,64,.35);overflow:hidden}
+  .tuning summary{cursor:pointer;list-style:none;padding:10px 12px;color:var(--txt);font-weight:650;font-size:13px}
+  .tuning summary::-webkit-details-marker{display:none}
+  .tuningBody{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+  .tuneLine{display:grid;grid-template-columns:110px 1fr 52px;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+  .tuneLine b{color:var(--txt);text-align:right}
+  .tuneLine input[type="range"]{width:100%}
+  .tuneHint{font-size:12px;line-height:1.35;color:rgba(232,238,252,.78);opacity:.95}
+
   .pieces{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .slot{padding:10px;border-radius:14px;border:1px dashed rgba(151,167,198,.35);background:rgba(11,15,26,.25);min-height:124px;display:flex;flex-direction:column;gap:8px;justify-content:center;align-items:center}
   .slot.used{opacity:.28;filter:saturate(.5) brightness(.85)}
@@ -190,6 +200,29 @@ body{
       <label class="toggle"><span>Sound</span><input id="sound" type="checkbox" checked/></label>
       <label class="toggle"><span>Coach</span><input id="coach" type="checkbox" checked/></label>
     </div>
+
+    <details class="tuning" id="tuningDetails">
+      <summary>Snap tuning</summary>
+      <div class="tuningBody">
+        <label class="tuneLine">
+          <span>Snap radius</span>
+          <input id="snapRadius" type="range" min="0.35" max="0.80" step="0.01" value="0.58">
+          <b id="snapRadiusVal">0.58</b>
+        </label>
+        <label class="tuneLine">
+          <span>Capture weight</span>
+          <input id="snapCapture" type="range" min="0" max="40" step="1" value="18">
+          <b id="snapCaptureVal">18</b>
+        </label>
+        <label class="tuneLine">
+          <span>Contact weight</span>
+          <input id="snapContact" type="range" min="0" max="6" step="0.1" value="1.2">
+          <b id="snapContactVal">1.2</b>
+        </label>
+        <div class="tuneHint">Tip: raise <b>Snap radius</b> for easier phone drops; raise <b>Capture</b> to bias toward “good” pockets when multiple snaps are close.</div>
+      </div>
+    </details>
+
 
     <div class="pieces" id="pieces"></div>
 
@@ -368,6 +401,63 @@ const SNAP_RADIUS_PX = ()=> cellSize() * SNAP_RADIUS_FACTOR;
 // Smart placement weights (tuneable)
 let SNAP_CAPTURE_WEIGHT = 18;   // prefers captures (pockets) when close
 let SNAP_CONTACT_WEIGHT = 1.2;  // subtle "nestling" preference
+
+// --- Snap tuning UI (optional) ---
+const snapRadiusEl = document.getElementById("snapRadius");
+const snapCaptureEl = document.getElementById("snapCapture");
+const snapContactEl = document.getElementById("snapContact");
+const snapRadiusValEl = document.getElementById("snapRadiusVal");
+const snapCaptureValEl = document.getElementById("snapCaptureVal");
+const snapContactValEl = document.getElementById("snapContactVal");
+
+// Load saved tuning (per-device feel)
+try{
+  const saved = JSON.parse(localStorage.getItem("echo_grid_snap_tuning") || "null");
+  if(saved && typeof saved === "object"){
+    if(typeof saved.radius === "number") SNAP_RADIUS_FACTOR = saved.radius;
+    if(typeof saved.capture === "number") SNAP_CAPTURE_WEIGHT = saved.capture;
+    if(typeof saved.contact === "number") SNAP_CONTACT_WEIGHT = saved.contact;
+  }
+}catch(_){}
+
+function syncSnapUI(){
+  if(snapRadiusEl){ snapRadiusEl.value = String(SNAP_RADIUS_FACTOR); snapRadiusValEl.textContent = Number(SNAP_RADIUS_FACTOR).toFixed(2); }
+  if(snapCaptureEl){ snapCaptureEl.value = String(SNAP_CAPTURE_WEIGHT); snapCaptureValEl.textContent = String(SNAP_CAPTURE_WEIGHT); }
+  if(snapContactEl){ snapContactEl.value = String(SNAP_CONTACT_WEIGHT); snapContactValEl.textContent = Number(SNAP_CONTACT_WEIGHT).toFixed(1); }
+}
+function saveSnapUI(){
+  try{
+    localStorage.setItem("echo_grid_snap_tuning", JSON.stringify({
+      radius: Number(SNAP_RADIUS_FACTOR),
+      capture: Number(SNAP_CAPTURE_WEIGHT),
+      contact: Number(SNAP_CONTACT_WEIGHT)
+    }));
+  }catch(_){}
+}
+function bindSnapUI(){
+  if(!snapRadiusEl) return; // UI not present
+  syncSnapUI();
+
+  snapRadiusEl.addEventListener("input", () => {
+    SNAP_RADIUS_FACTOR = Number(snapRadiusEl.value);
+    snapRadiusValEl.textContent = Number(SNAP_RADIUS_FACTOR).toFixed(2);
+    saveSnapUI();
+  });
+
+  snapCaptureEl.addEventListener("input", () => {
+    SNAP_CAPTURE_WEIGHT = Number(snapCaptureEl.value);
+    snapCaptureValEl.textContent = String(SNAP_CAPTURE_WEIGHT);
+    saveSnapUI();
+  });
+
+  snapContactEl.addEventListener("input", () => {
+    SNAP_CONTACT_WEIGHT = Number(snapContactEl.value);
+    snapContactValEl.textContent = Number(SNAP_CONTACT_WEIGHT).toFixed(1);
+    saveSnapUI();
+  });
+}
+bindSnapUI();
+
 
 function placedCellsForTopLeft(piece, gx, gy){
   const out=[];
