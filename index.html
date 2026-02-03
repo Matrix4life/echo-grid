@@ -284,7 +284,7 @@ body{
   const capHistory=[]; // {tier, zone, interior}
   let lastDifficulty="—";
   let coachAssist=1.0, coachSuggestion=null;
-  let dragging=null, hoverCell=null;
+  let dragging=null, hoverCell=null, hoverSnapMeta=null;
   let lastState=null;
 
   const flashes=[];
@@ -360,15 +360,108 @@ body{
   }
 
 
-  // Block Blast-style snapping:
-  // treat the pointer as the *center* of the piece, and compute the top-left grid cell.
-  function topLeftFromPointerCell(piece, cell){
-    if(!cell) return null;
-    return {
-      x: cell.x - Math.floor(piece.w/2),
-      y: cell.y - Math.floor(piece.h/2),
-    };
+// --- User-friendly snapping + smart placement (mobile) ---
+// Magnet snap radius (fraction of a cell). 0.45–0.70 feels good on phones.
+let SNAP_RADIUS_FACTOR = 0.58;
+const SNAP_RADIUS_PX = ()=> cellSize() * SNAP_RADIUS_FACTOR;
+
+// Smart placement weights (tuneable)
+let SNAP_CAPTURE_WEIGHT = 18;   // prefers captures (pockets) when close
+let SNAP_CONTACT_WEIGHT = 1.2;  // subtle "nestling" preference
+
+function placedCellsForTopLeft(piece, gx, gy){
+  const out=[];
+  for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
+    if(piece.shape[y][x]) out.push({x: gx+x, y: gy+y});
   }
+  return out;
+}
+
+function adjacencyContactScoreTopLeft(piece, gx, gy){
+  // Count how many edges of the placed blocks touch an occupied cell or the board edge.
+  // Higher = feels more "locked in" / stable.
+  const abs = placedCellsForTopLeft(piece, gx, gy);
+  let score=0;
+  const solid = (x,y)=>{
+    if(x<0||y<0||x>=GRID||y>=GRID) return true; // board edge
+    return board[y][x]!=null; // any occupied (includes ENTROPY + ENTROPY_DEAD)
+  };
+  for(const c of abs){
+    if(solid(c.x+1,c.y)) score++;
+    if(solid(c.x-1,c.y)) score++;
+    if(solid(c.x,c.y+1)) score++;
+    if(solid(c.x,c.y-1)) score++;
+  }
+  return score;
+}
+
+function captureValueIfPlaced(piece, gx, gy){
+  // Uses your existing capture system: simulate place → compute captureOnBoard.
+  if(!canPlace(piece,gx,gy)) return {cleared:0, interior:0, tier:0, mult:1.0};
+  const b2=copyBoard(board);
+  for(let y=0;y<piece.h;y++) for(let x=0;x<piece.w;x++){
+    if(piece.shape[y][x]) b2[gy+y][gx+x]=piece.color;
+  }
+  const cap=captureOnBoard(b2);
+  const diff = cap.diff || {tier:0, mult:1.0};
+  return {cleared: cap.cleared||0, interior: cap.interior||0, tier: diff.tier||0, mult: diff.mult||1.0};
+}
+
+function pickBestSnapCell(piece, clientX, clientY){
+  // Returns {x,y, meta} or null. x,y is top-left placement.
+  const r=getCanvasRect(); 
+  const sx=canvas.width/r.width; const sy=canvas.height/r.height;
+  const fingerX=(clientX-r.left)*sx, fingerY=(clientY-r.top)*sy;
+
+  // Base cell under finger
+  const base = pointerToGrid(clientX, clientY);
+  if(!base) return null;
+
+  const snapR = SNAP_RADIUS_PX();
+  const R = 2; // search neighborhood in cells
+
+  let best=null;
+
+  for(let dy=-R; dy<=R; dy++){
+    for(let dx=-R; dx<=R; dx++){
+      const gx = base.x + dx;
+      const gy = base.y + dy;
+
+      if(!canPlace(piece,gx,gy)) continue;
+
+      // distance finger → top-left cell center (consistent + stable)
+      const {px,py,s} = cellToPx(gx,gy);
+      const cx = px + s*0.5;
+      const cy = py + s*0.5;
+      const dist = Math.hypot(fingerX - cx, fingerY - cy);
+      if(dist > snapR) continue;
+
+      const proximity = 1 - (dist / snapR); // 0..1
+      const cap = captureValueIfPlaced(piece,gx,gy);
+      const contact = adjacencyContactScoreTopLeft(piece,gx,gy);
+
+      // Prefer captures, but keep proximity dominant so it snaps where you mean.
+      // - capValue grows with interior + cleared border, weighted by diff mult.
+      const capValue = (cap.cleared*1.0 + cap.interior*0.5) * cap.mult;
+
+      // Slight penalty for "too huge" pockets that trigger instability,
+      // so snap won't constantly "steal" you into massive entropy-heavy captures.
+      const bigPocketPenalty = (cap.interior >= LARGE_CAPTURE_THRESHOLD) ? 0.12 : 0.0;
+
+      const score =
+        proximity * 1000 +
+        capValue * SNAP_CAPTURE_WEIGHT +
+        contact * SNAP_CONTACT_WEIGHT -
+        bigPocketPenalty * 1000;
+
+      if(!best || score > best.score){
+        best = {x: gx, y: gy, score, meta: {dist, capValue, cleared:cap.cleared, interior:cap.interior, contact}};
+      }
+    }
+  }
+  return best;
+}
+
 
   // board
   function emptyBoard(){return Array.from({length:GRID},()=>Array(GRID).fill(null));}
@@ -751,9 +844,11 @@ function spawnEntropyFromPockets(pockets, count){
         if(p.used) return;
         canvas.setPointerCapture(e.pointerId);
         const pt=clientToCanvas(e.clientX,e.clientY);
-        dragging={piece:p, idx, x:pt.x, y:(pt.y - (cellSize()*4))};
-        hoverCell=topLeftFromPointerCell(dragging.piece, pointerToGrid(e.clientX,e.clientY));
-ensureAudio(); sfx.pick();
+        dragging={piece:p, idx, x:pt.x, y:pt.y};
+        const best = pickBestSnapCell(dragging.piece, e.clientX, e.clientY);
+    hoverCell = best ? {x: best.x, y: best.y} : null;
+    hoverSnapMeta = best ? best.meta : null;
+        ensureAudio(); sfx.pick();
       });
 
       piecesEl.appendChild(slot);
@@ -793,17 +888,18 @@ ensureAudio(); sfx.pick();
   canvas.addEventListener("pointermove",(e)=>{
     if(!dragging) return;
     const pt=clientToCanvas(e.clientX,e.clientY);
-    const lift = cellSize()*4;
-    dragging.x=pt.x; dragging.y=pt.y - lift;
-    hoverCell=topLeftFromPointerCell(dragging.piece, pointerToGrid(e.clientX,e.clientY));
-});
+    dragging.x=pt.x; dragging.y=pt.y;
+    const best = pickBestSnapCell(dragging.piece, e.clientX, e.clientY);
+    hoverCell = best ? {x: best.x, y: best.y} : null;
+    hoverSnapMeta = best ? best.meta : null;
+  });
 
   canvas.addEventListener("pointerup",(e)=>{
     if(!dragging) return;
     const p=dragging.piece;
-    const drop=topLeftFromPointerCell(p, pointerToGrid(e.clientX,e.clientY));
+    const drop = hoverCell ? {x: hoverCell.x, y: hoverCell.y} : pointerToGrid(e.clientX,e.clientY);
     if(!drop || !canPlace(p,drop.x,drop.y)){
-      sfx.bad(); dragging=null; hoverCell=null; return;
+      sfx.bad(); dragging=null; hoverCell=null; hoverSnapMeta=null; hoverSnapMeta=null; return;
     }
 
     // snapshot
@@ -909,7 +1005,7 @@ ensureAudio(); sfx.pick();
     if(score>best){best=score; localStorage.setItem("echo_grid_best_stable_entropy",String(best));}
 
     updateHUD();
-    dragging=null; hoverCell=null;
+    dragging=null; hoverCell=null; hoverSnapMeta=null;
 
     if(!anyMoveAvailable()){
       overlay.style.display="flex";
@@ -917,7 +1013,7 @@ ensureAudio(); sfx.pick();
     }
   });
 
-  canvas.addEventListener("lostpointercapture",()=>{dragging=null; hoverCell=null;});
+  canvas.addEventListener("lostpointercapture",()=>{dragging=null; hoverCell=null; hoverSnapMeta=null;});
 
   // undo/new
   function updateHUD(){
@@ -1123,28 +1219,15 @@ rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,9);
       }
     }
 
-    
-    // finger-follow piece (Block Blast-style: keep the piece slightly ABOVE your finger)
+    // finger-follow piece
     if(dragging){
       const p=dragging.piece;
-
-      // pointer position in canvas coords
       const px=dragging.x, py=dragging.y;
-
-      // draw scale: tied to cell size so it feels consistent across devices
       const block=Math.min(30, s*0.62);
       const gap=4;
-
       const w=p.w*block+(p.w-1)*gap;
       const h=p.h*block+(p.h-1)*gap;
-
-      // "lift" keeps your finger from covering the piece (similar to Block Blast)
-      const baseLift = Math.min(46, s*0.95);
-      const lift = baseLift*3;// triple distance from finger to piece
-
-      const ox=px-w/2;
-      const oy=py-h/2 - lift;
-
+      const ox=px-w/2, oy=py-h/2;
       for(let y=0;y<p.h;y++) for(let x=0;x<p.w;x++){
         if(!p.shape[y][x]) continue;
         const bx=ox+x*(block+gap), by=oy+y*(block+gap);
@@ -1153,7 +1236,6 @@ rr(ctx, px+1.2,py+1.2,s-2.4,s-2.4,9);
         ctx.strokeStyle="rgba(255,255,255,.10)"; ctx.lineWidth=1; ctx.stroke();
       }
     }
-
   }
 
   function tick(){ draw(); requestAnimationFrame(tick); }
