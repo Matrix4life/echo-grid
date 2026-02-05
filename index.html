@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <title>SnapField - Pocket Puzzle</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');
@@ -31,10 +34,16 @@
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
     color: var(--text);
     min-height: 100vh;
+    min-height: -webkit-fill-available;
     overflow: hidden;
     touch-action: none;
     -webkit-user-select: none;
     user-select: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
   }
   
   /* Animated background */
@@ -58,10 +67,12 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: -webkit-fill-available;
     padding: 16px;
     gap: 16px;
     max-width: 600px;
     margin: 0 auto;
+    overflow: hidden;
   }
   
   /* Header */
@@ -755,6 +766,7 @@
   
   // Power-up handlers
   bombBtn.addEventListener('click', () => {
+    initVibration();
     if (powerups.bomb > 0 && !activePowerup) {
       activePowerup = 'bomb';
       bombBtn.classList.add('powerup-active');
@@ -765,6 +777,7 @@
   });
   
   rowBtn.addEventListener('click', () => {
+    initVibration();
     if (powerups.row > 0 && !activePowerup) {
       activePowerup = 'row';
       rowBtn.classList.add('powerup-active');
@@ -775,6 +788,7 @@
   });
   
   colBtn.addEventListener('click', () => {
+    initVibration();
     if (powerups.col > 0 && !activePowerup) {
       activePowerup = 'col';
       colBtn.classList.add('powerup-active');
@@ -785,6 +799,7 @@
   });
   
   shuffleBtn.addEventListener('click', () => {
+    initVibration();
     if (powerups.shuffle > 0) {
       powerups.shuffle--;
       rollPieces();
@@ -883,8 +898,27 @@
   }
   
   function vibrate(pattern) {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(pattern);
+    if (!navigator.vibrate) return;
+    
+    // Handle both single values and arrays
+    try {
+      if (typeof pattern === 'number') {
+        navigator.vibrate(pattern);
+      } else if (Array.isArray(pattern)) {
+        navigator.vibrate(pattern);
+      }
+    } catch (e) {
+      console.log('Vibration not supported');
+    }
+  }
+  
+  // Test vibration on first user interaction
+  let vibrateInitialized = false;
+  function initVibration() {
+    if (!vibrateInitialized && navigator.vibrate) {
+      vibrateInitialized = true;
+      // Small test vibration to wake up the API
+      navigator.vibrate(1);
     }
   }
   
@@ -1317,28 +1351,30 @@
   
   function spawnObstacles() {
     // Progressive obstacle spawning based on difficulty waves
+    // REDUCED: Cut gray tiles by 50%
     const level = difficultyLevel;
     
-    // Wave 1 (Levels 1-3): Light gray tiles
+    // Wave 1 (Levels 1-3): Minimal gray tiles
     if (level <= 3) {
-      spawnGrayTiles(1);
+      // Only spawn every other level
+      if (level % 2 === 0) spawnGrayTiles(1);
     }
-    // Wave 2 (Levels 4-6): More gray tiles + first black seeds
+    // Wave 2 (Levels 4-6): Light gray tiles + first black seeds
     else if (level <= 6) {
-      spawnGrayTiles(2);
+      spawnGrayTiles(1); // Was 2, now 1
       if (level >= 5) spawnBlackSeeds(1);
     }
-    // Wave 3 (Levels 7-9): Heavy gray tiles + black seeds
+    // Wave 3 (Levels 7-9): Moderate gray tiles + black seeds
     else if (level <= 9) {
-      spawnGrayTiles(3);
+      spawnGrayTiles(1); // Was 3, now 1
       spawnBlackSeeds(1);
     }
-    // Wave 4 (Levels 10+): Maximum difficulty
+    // Wave 4 (Levels 10+): Balanced difficulty
     else {
-      spawnGrayTiles(3);
-      spawnBlackSeeds(2);
+      spawnGrayTiles(2); // Was 3, now 2
+      spawnBlackSeeds(1); // Was 2, now 1
       // Occasional instant wall at very high levels
-      if (level >= 12 && Math.random() < 0.3) {
+      if (level >= 12 && Math.random() < 0.2) { // Was 30%, now 20%
         spawnWall();
       }
     }
@@ -1467,21 +1503,25 @@
       
       slot.addEventListener('pointerdown', e => {
         if (p.used || gameOver) return;
+        initVibration(); // Initialize haptics on first touch
         activePointerId = e.pointerId;
         try { slot.setPointerCapture(e.pointerId); } catch(err) {}
         const pt = clientToCanvas(e.clientX, e.clientY);
         dragging = { piece: p, idx, x: pt.x, y: pt.y };
         hoverCell = pointerToGrid(e.clientX, e.clientY);
+        vibrate(10); // Light haptic feedback on pickup
         if (e.cancelable) e.preventDefault();
       });
       
       slot.addEventListener('touchstart', e => {
         if (p.used || gameOver) return;
+        initVibration(); // Initialize haptics on first touch
         const t = e.touches[0];
         if (!t) return;
         const pt = clientToCanvas(t.clientX, t.clientY);
         dragging = { piece: p, idx, x: pt.x, y: pt.y };
         hoverCell = pointerToGrid(t.clientX, t.clientY);
+        vibrate(10); // Light haptic feedback on pickup
         if (e.cancelable) e.preventDefault();
       }, { passive: false });
       
