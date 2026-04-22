@@ -174,124 +174,6 @@
     border-color: var(--accent);
   }
   
-
-
-  /* Header fit fixes */
-  .header-left,
-  .header-right {
-    min-width: 0;
-  }
-
-  .header-right {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .score-card {
-    min-width: 0;
-    flex: 0 1 auto;
-  }
-
-  .difficulty-badge {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-
-  .menu-btn {
-    flex: 0 0 auto;
-  }
-
-  @media (max-width: 560px) {
-    .header {
-      align-items: flex-start;
-    }
-
-    .header-left,
-    .header-right {
-      width: 100%;
-    }
-
-    .header-right {
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .score-card,
-    .difficulty-badge,
-    .menu-btn {
-      min-width: 0;
-    }
-
-    .score-card {
-      padding: 9px 12px;
-      gap: 6px;
-      border-radius: 14px;
-    }
-
-    .score-label {
-      font-size: 11px;
-    }
-
-    .score-value {
-      font-size: 18px;
-    }
-
-    .difficulty-badge {
-      padding: 5px 9px;
-      font-size: 10px;
-      gap: 4px;
-      max-width: 82px;
-    }
-
-    .menu-btn {
-      padding: 10px;
-      font-size: 18px;
-    }
-  }
-
-  @media (max-width: 420px) {
-    .header-right {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      align-items: stretch;
-      gap: 8px;
-    }
-
-    .score-card {
-      width: 100%;
-      justify-content: center;
-      padding: 8px 10px;
-    }
-
-    .difficulty-badge {
-      width: 100%;
-      justify-content: center;
-      text-align: center;
-      max-width: none;
-      line-height: 1.1;
-      padding: 5px 6px;
-    }
-
-    .menu-btn {
-      width: 100%;
-      padding: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .score-label {
-      font-size: 10px;
-    }
-
-    .score-value {
-      font-size: 16px;
-    }
-  }
-
   /* Board */
   .board-container {
     flex: 0 0 auto;
@@ -1416,15 +1298,16 @@
     return { x: (clientX - r.left) * sx, y: (clientY - r.top) * sy };
   }
   
-  function pointerToGrid(clientX, clientY, options = {}) {
+  function pointerToGrid(clientX, clientY) {
     const r = getRect();
     const sx = canvas.width / r.width;
     const sy = canvas.height / r.height;
-    const isTouchInput = options.isTouch ?? ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-    const dynamicOffset = isTouchInput ? Math.max(44, Math.min(r.height * 0.14, 88)) : 0;
+
+    const isTouchLike = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const fingerOffset = isTouchLike ? 132 : 0;
 
     const x = (clientX - r.left) * sx;
-    const y = ((clientY - dynamicOffset) - r.top) * sy;
+    const y = ((clientY - fingerOffset) - r.top) * sy;
 
     const s = cellSize();
     const gx = Math.floor((x - PAD + GAP / 2) / (s + GAP));
@@ -2306,19 +2189,20 @@
       }
     }
     
-    // Dragged piece UNDER finger (this draws first, so it's behind)
+    // Dragged piece stays well below the finger on touch so the board target stays visible
     if (dragging) {
       const p = dragging.piece;
       const block = Math.min(36, s * 0.7);
       const gap = Math.max(3, s * 0.08);
       const w = p.w * block + (p.w - 1) * gap;
       const h = p.h * block + (p.h - 1) * gap;
-      
-      // Position piece BELOW the pointer (under the thumb)
+
+      const isTouchLike = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+      const belowFingerLift = isTouchLike ? Math.max(58, Math.min(86, canvas.getBoundingClientRect().height * 0.10)) : 20;
+
       const ox = dragging.x - w / 2;
-      const oy = dragging.y + 20; // Below finger
-      
-      // Shadow
+      const oy = dragging.y + belowFingerLift;
+
       ctx.save();
       ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -2327,8 +2211,7 @@
       rr(ctx, ox - 10, oy - 10, w + 20, h + 20, 14);
       ctx.fill();
       ctx.restore();
-      
-      // Draw blocks
+
       for (let y = 0; y < p.h; y++) {
         for (let x = 0; x < p.w; x++) {
           if (!p.shape[y][x]) continue;
@@ -2336,7 +2219,7 @@
         }
       }
     }
-    
+
     // Ghost preview at actual hover cell (no offset needed - it draws at the right spot)
     if (dragging && hoverCell) {
       const p = dragging.piece;
