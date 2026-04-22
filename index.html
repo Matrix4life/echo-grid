@@ -34,16 +34,15 @@
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
     color: var(--text);
     min-height: 100vh;
+    min-height: 100dvh;
     min-height: -webkit-fill-available;
     overflow: hidden;
     touch-action: none;
     -webkit-user-select: none;
     user-select: none;
-    position: fixed;
     width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
+    height: 100vh;
+    height: 100dvh;
   }
   
   /* Animated background */
@@ -67,6 +66,7 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     height: -webkit-fill-available;
     padding: 16px;
     gap: 16px;
@@ -174,18 +174,136 @@
     border-color: var(--accent);
   }
   
+
+
+  /* Header fit fixes */
+  .header-left,
+  .header-right {
+    min-width: 0;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .score-card {
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  .difficulty-badge {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .menu-btn {
+    flex: 0 0 auto;
+  }
+
+  @media (max-width: 560px) {
+    .header {
+      align-items: flex-start;
+    }
+
+    .header-left,
+    .header-right {
+      width: 100%;
+    }
+
+    .header-right {
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .score-card,
+    .difficulty-badge,
+    .menu-btn {
+      min-width: 0;
+    }
+
+    .score-card {
+      padding: 9px 12px;
+      gap: 6px;
+      border-radius: 14px;
+    }
+
+    .score-label {
+      font-size: 11px;
+    }
+
+    .score-value {
+      font-size: 18px;
+    }
+
+    .difficulty-badge {
+      padding: 5px 9px;
+      font-size: 10px;
+      gap: 4px;
+      max-width: 82px;
+    }
+
+    .menu-btn {
+      padding: 10px;
+      font-size: 18px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .header-right {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .score-card {
+      width: 100%;
+      justify-content: center;
+      padding: 8px 10px;
+    }
+
+    .difficulty-badge {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+      max-width: none;
+      line-height: 1.1;
+      padding: 5px 6px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-label {
+      font-size: 10px;
+    }
+
+    .score-value {
+      font-size: 16px;
+    }
+  }
+
   /* Board */
   .board-container {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    min-height: 220px;
   }
   
   canvas {
-    width: 100%;
-    max-width: min(calc(100vh - 320px), 520px);
+    width: min(100%, 520px);
     height: auto;
     aspect-ratio: 1;
     border-radius: 20px;
@@ -548,6 +666,17 @@
     border-color: var(--accent);
     transform: translateY(-2px);
   }
+
+  .powerup-btn.powerup-active {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(239, 68, 68, 0.28));
+    border-color: rgba(251, 191, 36, 0.95);
+    box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.18), 0 10px 28px rgba(245, 158, 11, 0.22);
+    transform: translateY(-2px);
+  }
+
+  .powerup-btn.powerup-active .powerup-label {
+    color: #fde68a;
+  }
   
   .powerup-btn:disabled {
     opacity: 0.3;
@@ -576,6 +705,45 @@
     text-align: center;
   }
   
+  /* Live status */
+  .status-bar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 12px;
+  }
+
+  .status-pill {
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .status-pill strong {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .status-pill span {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   /* Difficulty indicator */
   .difficulty-badge {
     padding: 6px 12px;
@@ -590,6 +758,14 @@
     gap: 6px;
   }
   
+
+  .header,
+  .powerups-bar,
+  .status-bar,
+  .pieces-tray {
+    flex: 0 0 auto;
+  }
+
   @media (max-width: 640px) {
     .container {
       padding: 12px;
@@ -618,10 +794,136 @@
       padding: 24px;
       max-width: calc(100vw - 32px);
     }
+
+    .status-bar {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+
+    .status-pill {
+      padding: 9px 10px;
+    }
+
+    .status-pill span {
+      font-size: 12px;
+    }
   }
+
+
+  /* Fit-screen patch: preserve original look, only compress on shorter screens */
+  html, body {
+    height: 100%;
+  }
+
+  body.fit-screen-safe {
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .container {
+    min-height: 100vh;
+    min-height: 100svh;
+  }
+
+  canvas {
+    max-width: min(calc(100vh - 380px), calc(100vw - 32px), 520px);
+  }
+
+  @media (max-height: 900px) {
+    .container { padding: 12px; gap: 12px; }
+    .logo-container { padding: 8px 14px; }
+    .logo-icon { width: 28px; height: 28px; font-size: 16px; }
+    .logo-text { font-size: 18px; }
+    .score-card { padding: 10px 14px; }
+    .score-value { font-size: 20px; }
+    .difficulty-badge { padding: 5px 10px; font-size: 10px; }
+    .powerups-bar { padding: 8px; gap: 6px; }
+    .powerup-btn { padding: 8px; min-width: 60px; }
+    .powerup-label { font-size: 8px; }
+    .board-container { flex: 0 1 auto; }
+    canvas { max-width: min(calc(100vh - 350px), calc(100vw - 28px), 500px); }
+    .pieces-tray { padding: 12px; gap: 8px; }
+    .piece-slot { min-height: 88px; padding: 10px; }
+    .piece-preview { height: 58px; }
+  }
+
+  @media (max-height: 820px) {
+    .container { padding: 10px; gap: 10px; }
+    .header { gap: 8px; }
+    .header-left, .header-right { gap: 8px; }
+    .score-card { padding: 8px 12px; border-radius: 14px; }
+    .score-label { font-size: 11px; }
+    .score-value { font-size: 18px; }
+    .menu-btn { padding: 10px; font-size: 18px; }
+    .powerups-bar { padding: 7px; gap: 6px; border-radius: 14px; }
+    .powerup-btn { padding: 7px; border-radius: 10px; min-width: 56px; }
+    .powerup-btn > span:first-child { font-size: 18px; }
+    .powerup-count { font-size: 9px; min-width: 16px; }
+    canvas { max-width: min(calc(100vh - 330px), calc(100vw - 24px), 470px); }
+    .pieces-tray { padding: 10px; gap: 8px; }
+    .piece-slot { min-height: 78px; padding: 8px; }
+    .piece-preview { height: 50px; }
+    .piece-label { font-size: 10px; }
+  }
+
+  @media (max-height: 740px) {
+    .container { padding: 8px; gap: 8px; }
+    .logo-container { padding: 7px 12px; border-radius: 14px; }
+    .logo-icon { width: 24px; height: 24px; font-size: 14px; }
+    .logo-text { font-size: 16px; }
+    .score-card { padding: 7px 10px; border-radius: 12px; }
+    .score-label { font-size: 10px; }
+    .score-value { font-size: 16px; }
+    .difficulty-badge { font-size: 9px; padding: 4px 8px; }
+    .menu-btn { padding: 8px; font-size: 16px; }
+    .powerups-bar { padding: 6px; gap: 5px; }
+    .powerup-btn { padding: 6px 4px; min-width: 0; }
+    .powerup-btn > span:first-child { font-size: 16px; }
+    .powerup-label { font-size: 7px; letter-spacing: 0.3px; }
+    canvas { max-width: min(calc(100vh - 300px), calc(100vw - 20px), 430px); }
+    .pieces-tray { padding: 8px; gap: 6px; border-radius: 16px; }
+    .piece-slot { min-height: 68px; padding: 6px; border-radius: 12px; }
+    .piece-preview { height: 42px; }
+    .piece-label { font-size: 9px; }
+  }
+
+  @media (max-width: 640px) {
+    body.fit-screen-safe {
+      position: relative;
+      width: auto;
+      height: auto;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    .container {
+      max-width: 100%;
+      min-height: 100vh;
+      min-height: 100svh;
+    }
+    canvas {
+      max-width: min(calc(100vw - 24px), calc(100vh - 310px), 100%);
+    }
+  }
+
+
+  /* Exact-fit patch: preserve design, scale whole game to viewport */
+  body.fit-exact {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  body.fit-exact .container {
+    transform-origin: top center;
+    will-change: transform;
+  }
+
 </style>
 </head>
-<body>
+<body class="fit-screen-safe fit-exact">
   <div class="container">
     <!-- Header -->
     <div class="header">
@@ -675,6 +977,13 @@
         <span class="powerup-label">Shuffle</span>
         <span class="powerup-count" id="shuffleCount">1</span>
       </button>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <div class="status-pill"><strong>Combo</strong><span id="comboStatus">Ready</span></div>
+      <div class="status-pill"><strong>Bomb</strong><span id="bombRule">8+ snap = bomb</span></div>
+      <div class="status-pill"><strong>Next level</strong><span id="nextLevelStatus">500 pts</span></div>
+      <div class="status-pill"><strong>Seeds</strong><span id="seedRule">3 flags to wall</span></div>
     </div>
     
     <!-- Board -->
@@ -756,6 +1065,10 @@
   const comboEl = document.getElementById('combo');
   const difficultyBadge = document.getElementById('difficultyBadge');
   const difficultyLevelEl = document.getElementById('difficultyLevel');
+  const comboStatusEl = document.getElementById('comboStatus');
+  const bombRuleEl = document.getElementById('bombRule');
+  const nextLevelStatusEl = document.getElementById('nextLevelStatus');
+  const seedRuleEl = document.getElementById('seedRule');
   
   // Power-up buttons
   const bombBtn = document.getElementById('bombPowerup');
@@ -878,23 +1191,35 @@
     gameOver: () => playSound(110, 0.3, 'sine')
   };
   
+  let audioContext = null;
+
+  function getAudioContext() {
+    if (audioContext) return audioContext;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioContext = new Ctx();
+    return audioContext;
+  }
+
   function playSound(frequency, duration, type = 'sine') {
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const ac = getAudioContext();
+      if (!ac) return;
+      if (ac.state === 'suspended') ac.resume();
+      const oscillator = ac.createOscillator();
+      const gainNode = ac.createGain();
       
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(ac.destination);
       
       oscillator.frequency.value = frequency;
       oscillator.type = type;
       
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+      gainNode.gain.setValueAtTime(0.24, ac.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + duration);
       
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + duration);
+      oscillator.start(ac.currentTime);
+      oscillator.stop(ac.currentTime + duration);
     } catch (e) {
       // Audio not supported
     }
@@ -973,6 +1298,8 @@
   let comboCount = 0;
   let comboTimer = 0;
   const COMBO_WINDOW = 3000; // 3 seconds to maintain combo
+  let bigSnapStreak = 0;
+  let rowColMeter = 0;
   
   // Animation helpers
   let pulseTime = 0;
@@ -1089,18 +1416,16 @@
     return { x: (clientX - r.left) * sx, y: (clientY - r.top) * sy };
   }
   
-  function pointerToGrid(clientX, clientY) {
+  function pointerToGrid(clientX, clientY, options = {}) {
     const r = getRect();
     const sx = canvas.width / r.width;
     const sy = canvas.height / r.height;
-    
-    // Look ABOVE the finger position - user is targeting cells above their thumb
-    // This offset should match roughly where the ghost appears on screen
-    const fingerOffset = 120; // pixels above finger in CLIENT space
-    
+    const isTouchInput = options.isTouch ?? ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const dynamicOffset = isTouchInput ? Math.max(44, Math.min(r.height * 0.14, 88)) : 0;
+
     const x = (clientX - r.left) * sx;
-    const y = ((clientY - fingerOffset) - r.top) * sy; // Look above the finger
-    
+    const y = ((clientY - dynamicOffset) - r.top) * sy;
+
     const s = cellSize();
     const gx = Math.floor((x - PAD + GAP / 2) / (s + GAP));
     const gy = Math.floor((y - PAD + GAP / 2) / (s + GAP));
@@ -1285,6 +1610,57 @@
     return { cleared, interior };
   }
   
+  function getBombThreshold() {
+    return Math.min(8 + Math.floor(difficultyLevel / 3) * 2, 18);
+  }
+
+  function getNextLevelScore() {
+    return difficultyLevel * 500;
+  }
+
+  function clearActivePowerup() {
+    activePowerup = null;
+    bombBtn.classList.remove('powerup-active');
+    rowBtn.classList.remove('powerup-active');
+    colBtn.classList.remove('powerup-active');
+  }
+
+  function awardDeterministicPowerups(size) {
+    let rewardMessage = null;
+
+    if (size >= getBombThreshold()) {
+      bigSnapStreak++;
+      if (bigSnapStreak >= 2) {
+        powerups.bomb++;
+        bigSnapStreak = 0;
+        rewardMessage = ['💣 Bomb Earned!', 'Two big snaps banked a bomb'];
+      }
+    }
+
+    rowColMeter += size;
+    while (rowColMeter >= 12) {
+      rowColMeter -= 12;
+      if (powerups.row <= powerups.col) {
+        powerups.row++;
+        rewardMessage = ['↔️ Row Earned!', 'Momentum meter filled'];
+      } else {
+        powerups.col++;
+        rewardMessage = ['↕️ Column Earned!', 'Momentum meter filled'];
+      }
+    }
+
+    if (comboCount >= 4 && comboCount % 4 === 0) {
+      powerups.shuffle++;
+      rewardMessage = ['🔄 Shuffle Earned!', `${comboCount}x combo reward`];
+    }
+
+    if (rewardMessage) {
+      showToast(rewardMessage[0], rewardMessage[1]);
+      sounds.powerup();
+      vibrate(100);
+    }
+  }
+
   function updateHUD() {
     scoreEl.textContent = score;
     bestEl.textContent = best;
@@ -1294,15 +1670,12 @@
     if (now - comboTimer > COMBO_WINDOW && comboCount > 0) {
       comboCount = 0;
     }
-    
-    if (comboCount > 1) {
-      comboCard.style.display = 'flex';
-      comboEl.textContent = `x${comboCount}`;
-      comboCard.classList.add('combo-active');
-    } else {
-      comboCard.style.display = 'none';
-      comboCard.classList.remove('combo-active');
-    }
+
+    comboCard.style.display = 'flex';
+    comboEl.textContent = `x${Math.max(comboCount, 1)}`;
+    comboCard.classList.toggle('combo-active', comboCount > 1);
+    comboCard.style.opacity = comboCount > 1 ? '1' : '0.72';
+    comboStatusEl.textContent = comboCount > 1 ? `${comboCount}x live` : 'Ready';
     
     // Update difficulty
     const newLevel = Math.floor(score / 500) + 1;
@@ -1311,7 +1684,7 @@
       difficultyLevelEl.textContent = `Level ${difficultyLevel}`;
       
       // Calculate new bomb requirement
-      const bombReq = Math.min(8 + Math.floor(difficultyLevel / 3) * 2, 18);
+      const bombReq = getBombThreshold();
       
       // Level up notification with bomb requirement
       let message = `Difficulty increased to Level ${difficultyLevel}`;
@@ -1338,6 +1711,10 @@
         spawnObstacles();
       }, 500);
     }
+
+    bombRuleEl.textContent = `${getBombThreshold()}+ snap x2 = bomb`;
+    nextLevelStatusEl.textContent = `${Math.max(0, getNextLevelScore() - score)} pts`;
+    seedRuleEl.textContent = `${BLACK_TO_WALL_TURNS} flags to wall`;
   }
   
   function updatePowerupUI() {
@@ -1511,7 +1888,7 @@
         try { slot.setPointerCapture(e.pointerId); } catch(err) {}
         const pt = clientToCanvas(e.clientX, e.clientY);
         dragging = { piece: p, idx, x: pt.x, y: pt.y };
-        hoverCell = pointerToGrid(e.clientX, e.clientY);
+        hoverCell = pointerToGrid(e.clientX, e.clientY, { isTouch: e.pointerType === 'touch' });
         vibrate(10); // Light haptic feedback on pickup
         if (e.cancelable) e.preventDefault();
       });
@@ -1523,7 +1900,7 @@
         if (!t) return;
         const pt = clientToCanvas(t.clientX, t.clientY);
         dragging = { piece: p, idx, x: pt.x, y: pt.y };
-        hoverCell = pointerToGrid(t.clientX, t.clientY);
+        hoverCell = pointerToGrid(t.clientX, t.clientY, { isTouch: true });
         vibrate(10); // Light haptic feedback on pickup
         if (e.cancelable) e.preventDefault();
       }, { passive: false });
@@ -1537,7 +1914,7 @@
     const pt = clientToCanvas(e.clientX, e.clientY);
     dragging.x = pt.x;
     dragging.y = pt.y;
-    hoverCell = pointerToGrid(e.clientX, e.clientY);
+    hoverCell = pointerToGrid(e.clientX, e.clientY, { isTouch: e.pointerType === 'touch' });
     if (e.cancelable) e.preventDefault();
   }
   
@@ -1625,37 +2002,8 @@
         // Show floating score for capture
         showFloatingScore(pts, rect.left + px + 40, rect.top + py - 40);
         
-        // Award power-ups based on difficulty-scaled requirements
-        const bombThreshold = Math.min(8 + Math.floor(difficultyLevel / 3) * 2, 18); // 8→10→12→14→16→18
-        const rowColChance = Math.max(0.15 - (difficultyLevel * 0.01), 0.05); // 15%→5%
-        
-        if (size >= bombThreshold) {
-          powerups.bomb++;
-          showToast('💣 Bomb Earned!', `Great ${size}-block snap!`);
-          sounds.powerup();
-          vibrate(100);
-        }
-        
-        // Row/Col become rare at higher levels
-        if (difficultyLevel <= 8 && Math.random() < rowColChance) {
-          if (Math.random() < 0.5) {
-            powerups.row++;
-            showToast('↔️ Row Earned!', 'Lucky bonus!');
-          } else {
-            powerups.col++;
-            showToast('↕️ Column Earned!', 'Lucky bonus!');
-          }
-          sounds.powerup();
-          vibrate(100);
-        }
-        
-        // Shuffle from combos (unchanged)
-        if (comboCount >= 5 && comboCount % 5 === 0) {
-          powerups.shuffle++;
-          showToast('🔄 Shuffle Earned!', `${comboCount}x combo bonus!`);
-          sounds.powerup();
-          vibrate(100);
-        }
+        // Award power-ups through clearer deterministic progress
+        awardDeterministicPowerups(size);
       } else {
         // Reset combo if no capture
         if (Date.now() - comboTimer > COMBO_WINDOW) {
@@ -1689,7 +2037,7 @@
   canvas.addEventListener('click', (e) => {
     if (!activePowerup) return;
     
-    const cell = pointerToGrid(e.clientX, e.clientY);
+    const cell = pointerToGrid(e.clientX, e.clientY, { isTouch: e.pointerType === 'touch' });
     if (!cell) return;
     
     sounds.powerup();
@@ -1737,36 +2085,35 @@
       // Clear entire row
       let cleared = 0;
       for (let x = 0; x < GRID; x++) {
-        if (isColor(board[cell.y][x])) {
+        const tile = board[cell.y][x];
+        if (tile) {
           board[cell.y][x] = null;
           cleared++;
           const s = cellSize();
           const { px, py } = cellToPx(x, cell.y);
-          createParticles(px + s / 2, py + s / 2, '#3b82f6', 6);
+          createParticles(px + s / 2, py + s / 2, isColor(tile) ? tile.color : '#3b82f6', 6);
         }
       }
       powerups.row--;
-      showToast('↔️ Row Cleared!', `Cleared ${cleared} blocks`);
+      showToast('↔️ Row Cleared!', `Cleared ${cleared} tiles`);
     } else if (activePowerup === 'col') {
       // Clear entire column
       let cleared = 0;
       for (let y = 0; y < GRID; y++) {
-        if (isColor(board[y][cell.x])) {
+        const tile = board[y][cell.x];
+        if (tile) {
           board[y][cell.x] = null;
           cleared++;
           const s = cellSize();
           const { px, py } = cellToPx(cell.x, y);
-          createParticles(px + s / 2, py + s / 2, '#06b6d4', 6);
+          createParticles(px + s / 2, py + s / 2, isColor(tile) ? tile.color : '#06b6d4', 6);
         }
       }
       powerups.col--;
-      showToast('↕️ Column Cleared!', `Cleared ${cleared} blocks`);
+      showToast('↕️ Column Cleared!', `Cleared ${cleared} tiles`);
     }
     
-    activePowerup = null;
-    bombBtn.classList.remove('powerup-active');
-    rowBtn.classList.remove('powerup-active');
-    colBtn.classList.remove('powerup-active');
+    clearActivePowerup();
     updatePowerupUI();
   });
   
@@ -1791,7 +2138,7 @@
     const pt = clientToCanvas(t.clientX, t.clientY);
     dragging.x = pt.x;
     dragging.y = pt.y;
-    hoverCell = pointerToGrid(t.clientX, t.clientY);
+    hoverCell = pointerToGrid(t.clientX, t.clientY, { isTouch: true });
     if (e.cancelable) e.preventDefault();
   }
   
@@ -2019,6 +2366,9 @@
     };
     activePowerup = null;
     comboCount = 0;
+    bigSnapStreak = 0;
+    rowColMeter = 0;
+    clearActivePowerup();
     seed();
     rollPieces();
     updateHUD();
@@ -2027,8 +2377,40 @@
     if (!anyMoveAvailable()) setGameOver(true);
   }
   
+
+
+  function fitBoardToViewport() {
+    const container = document.querySelector('.container');
+    const header = document.querySelector('.header');
+    const powerupsBar = document.querySelector('.powerups-bar');
+    const statusBar = document.querySelector('.status-bar');
+    const piecesTray = document.getElementById('pieces');
+    const boardWrap = document.querySelector('.board-container');
+    if (!container || !header || !powerupsBar || !statusBar || !piecesTray || !boardWrap) return;
+
+    const styles = getComputedStyle(container);
+    const padY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+    const gap = parseFloat(styles.gap) || 0;
+
+    const fixedHeight = header.offsetHeight + powerupsBar.offsetHeight + statusBar.offsetHeight + piecesTray.offsetHeight;
+    const availableHeight = window.innerHeight - padY - (gap * 4) - fixedHeight;
+    const availableWidth = Math.min(container.clientWidth, window.innerWidth) - padX;
+
+    const nextSize = Math.floor(Math.min(520, availableWidth, availableHeight));
+    const boardSize = Math.max(220, nextSize || 220);
+
+    boardWrap.style.height = boardSize + 'px';
+    canvas.style.width = boardSize + 'px';
+    canvas.style.height = boardSize + 'px';
+  }
+
   best = Number(localStorage.getItem('snapfield_best') || '0') || 0;
   newGame();
+  fitBoardToViewport();
+  window.addEventListener('resize', fitBoardToViewport);
+  setTimeout(fitBoardToViewport, 0);
+  setTimeout(fitBoardToViewport, 120);
   requestAnimationFrame(tick);
 })();
 </script>
