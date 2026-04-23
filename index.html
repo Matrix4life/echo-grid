@@ -930,7 +930,15 @@
   const GAP = 4;
   
   const canvas = document.getElementById('canvas');
+  if (!canvas) {
+    document.body.innerHTML = '<p style="color:#fff;text-align:center;padding:2rem">Your browser does not support this game (canvas missing).</p>';
+    return;
+  }
   const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    document.body.innerHTML = '<p style="color:#fff;text-align:center;padding:2rem">Your browser does not support this game (2D context unavailable).</p>';
+    return;
+  }
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const piecesEl = document.getElementById('pieces');
@@ -963,6 +971,11 @@
   const shuffleCount = document.getElementById('shuffleCount');
   
   // Power-up handlers
+  if (!bombBtn || !rowBtn || !colBtn || !shuffleBtn) {
+    console.warn('One or more powerup buttons not found in DOM');
+    return;
+  }
+
   bombBtn.addEventListener('click', () => {
     initVibration();
     if (powerups.bomb > 0 && !activePowerup) {
@@ -1046,6 +1059,8 @@
   ];
   
   let board = null;
+  let boardVersion = 0;
+  let ghostPocketCache = null;
   let pieces = [];
   let score = 0;
   let best = 0;
@@ -1178,14 +1193,13 @@
   
   // Combo tracking
   let comboCount = 0;
-  let comboTimer = 0;
+  let comboTimer = null;
   const COMBO_WINDOW = 3000; // 3 seconds to maintain combo
   let bigSnapStreak = 0;
   let rowColMeter = 0;
   
   // Animation helpers
   let pulseTime = 0;
-  let shakeAmount = 0;
   
   // Input
   let dragging = null;
@@ -1278,6 +1292,7 @@
   }
   
   function cellSize() {
+    if (canvas.width <= 0) return 40;
     const inner = canvas.width - PAD * 2;
     return (inner - GAP * (GRID - 1)) / GRID;
   }
@@ -1466,7 +1481,7 @@
   
   function capture() {
     const pockets = pocketsOnBoard(board);
-    if (!pockets.length) return { cleared: 0, interior: 0 };
+    if (!pockets.length) return { cleared: 0, interior: 0, cells: [] };
     const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
     const boundary = new Set();
     let interior = 0;
@@ -1477,20 +1492,22 @@
           const nx = cell.x + dx;
           const ny = cell.y + dy;
           if (nx < 0 || ny < 0 || nx >= GRID || ny >= GRID) continue;
-          if (board[ny][nx] != null) boundary.add(ny * GRID + nx);
+          if (board[ny][nx] !== null) boundary.add(ny * GRID + nx);
         }
       }
     }
     let cleared = 0;
+    const clearedCells = [];
     for (const key of boundary) {
       const y = Math.floor(key / GRID);
       const x = key % GRID;
       if (isColor(board[y][x])) {
         board[y][x] = null;
         cleared++;
+        clearedCells.push({ x, y });
       }
     }
-    return { cleared, interior };
+    return { cleared, interior, cells: clearedCells };
   }
   
   function getBombThreshold() {
@@ -1550,8 +1567,9 @@
     
     // Update combo display
     const now = Date.now();
-    if (now - comboTimer > COMBO_WINDOW && comboCount > 0) {
+    if (comboCount > 0 && (comboTimer === null || now - comboTimer > COMBO_WINDOW)) {
       comboCount = 0;
+      comboTimer = null;
     }
 
     comboCard.style.display = 'flex';
@@ -1592,6 +1610,7 @@
       // Spawn new obstacles
       setTimeout(() => {
         spawnObstacles();
+        boardVersion++;
       }, 500);
     }
 
@@ -1835,7 +1854,8 @@
       setTimeout(() => scoreEl.classList.remove('score-pop'), 300);
       
       tickBlackSeedsFlagged();
-      
+      boardVersion++;
+
       const cap = capture();
       if (cap.cleared > 0) {
         const size = cap.cleared;
@@ -1861,13 +1881,9 @@
         }
         
         // Create explosion particles at captured blocks
-        for (let y = 0; y < GRID; y++) {
-          for (let x = 0; x < GRID; x++) {
-            if (board[y][x] === null) {
-              const { px, py } = cellToPx(x, y);
-              createParticles(px + s / 2, py + s / 2, '#fbbf24', 6);
-            }
-          }
+        for (const cell of cap.cells) {
+          const { px, py } = cellToPx(cell.x, cell.y);
+          createParticles(px + s / 2, py + s / 2, '#fbbf24', 6);
         }
         
         // Screen shake for big captures
@@ -1888,9 +1904,10 @@
         // Award power-ups through clearer deterministic progress
         awardDeterministicPowerups(size);
       } else {
-        // Reset combo if no capture
-        if (Date.now() - comboTimer > COMBO_WINDOW) {
+        // Reset combo if no capture and window has expired
+        if (comboTimer === null || Date.now() - comboTimer > COMBO_WINDOW) {
           comboCount = 0;
+          comboTimer = null;
         }
       }
       
@@ -1996,6 +2013,7 @@
       showToast('↕️ Column Cleared!', `Cleared ${cleared} tiles`);
     }
     
+    boardVersion++;
     clearActivePowerup();
     updatePowerupUI();
   });
@@ -2066,7 +2084,9 @@
   }
   
   function getPocketsIfPlaced(p, gx, gy) {
-    // Create temp board with piece placed
+    if (ghostPocketCache && ghostPocketCache.p === p && ghostPocketCache.gx === gx && ghostPocketCache.gy === gy && ghostPocketCache.v === boardVersion) {
+      return ghostPocketCache.pockets;
+    }
     const tempBoard = board.map(row => [...row]);
     for (let y = 0; y < p.h; y++) {
       for (let x = 0; x < p.w; x++) {
@@ -2077,7 +2097,9 @@
         tempBoard[by][bx] = { t: 'c', color: p.color };
       }
     }
-    return pocketsOnBoard(tempBoard);
+    const pockets = pocketsOnBoard(tempBoard);
+    ghostPocketCache = { p, gx, gy, v: boardVersion, pockets };
+    return pockets;
   }
   
   function drawPieceGhost(p, gx, gy, ok) {
@@ -2198,7 +2220,7 @@
       const h = p.h * block + (p.h - 1) * gap;
 
       const isTouchLike = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-      const belowFingerLift = isTouchLike ? Math.max(58, Math.min(86, canvas.getBoundingClientRect().height * 0.10)) : 20;
+      const belowFingerLift = isTouchLike ? Math.max(58, Math.min(86, canvas.clientHeight * 0.10)) : 20;
 
       const ox = dragging.x - w / 2;
       const oy = dragging.y + belowFingerLift;
@@ -2249,7 +2271,9 @@
     };
     activePowerup = null;
     comboCount = 0;
+    comboTimer = null;
     bigSnapStreak = 0;
+    boardVersion++;
     rowColMeter = 0;
     clearActivePowerup();
     seed();
