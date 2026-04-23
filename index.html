@@ -587,45 +587,6 @@
     text-align: center;
   }
   
-  /* Live status */
-  .status-bar {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 12px;
-  }
-
-  .status-pill {
-    min-width: 0;
-    padding: 10px 12px;
-    border-radius: 14px;
-    background: rgba(15, 23, 42, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .status-pill strong {
-    display: block;
-    font-size: 11px;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-  }
-
-  .status-pill span {
-    display: block;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   /* Difficulty indicator */
   .difficulty-badge {
     padding: 6px 12px;
@@ -643,7 +604,6 @@
 
   .header,
   .powerups-bar,
-  .status-bar,
   .pieces-tray {
     flex: 0 0 auto;
   }
@@ -677,19 +637,6 @@
       max-width: calc(100vw - 32px);
     }
 
-    .status-bar {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      padding: 10px;
-    }
-
-    .status-pill {
-      padding: 9px 10px;
-    }
-
-    .status-pill span {
-      font-size: 12px;
-    }
   }
 
 
@@ -861,13 +808,6 @@
       </button>
     </div>
 
-    <div class="status-bar" id="statusBar">
-      <div class="status-pill"><strong>Combo</strong><span id="comboStatus">Ready</span></div>
-      <div class="status-pill"><strong>Bomb</strong><span id="bombRule">8+ snap = bomb</span></div>
-      <div class="status-pill"><strong>Next level</strong><span id="nextLevelStatus">500 pts</span></div>
-      <div class="status-pill"><strong>Seeds</strong><span id="seedRule">3 flags to wall</span></div>
-    </div>
-    
     <!-- Board -->
     <div class="board-container">
       <canvas id="canvas" width="680" height="680"></canvas>
@@ -955,11 +895,6 @@
   const comboEl = document.getElementById('combo');
   const difficultyBadge = document.getElementById('difficultyBadge');
   const difficultyLevelEl = document.getElementById('difficultyLevel');
-  const comboStatusEl = document.getElementById('comboStatus');
-  const bombRuleEl = document.getElementById('bombRule');
-  const nextLevelStatusEl = document.getElementById('nextLevelStatus');
-  const seedRuleEl = document.getElementById('seedRule');
-  
   // Power-up buttons
   const bombBtn = document.getElementById('bombPowerup');
   const rowBtn = document.getElementById('rowPowerup');
@@ -1576,8 +1511,6 @@
     comboEl.textContent = `x${Math.max(comboCount, 1)}`;
     comboCard.classList.toggle('combo-active', comboCount > 1);
     comboCard.style.opacity = comboCount > 1 ? '1' : '0.72';
-    comboStatusEl.textContent = comboCount > 1 ? `${comboCount}x live` : 'Ready';
-    
     // Update difficulty
     const newLevel = Math.floor(score / 500) + 1;
     if (newLevel !== difficultyLevel) {
@@ -1614,9 +1547,6 @@
       }, 500);
     }
 
-    bombRuleEl.textContent = `${getBombThreshold()}+ snap x2 = bomb`;
-    nextLevelStatusEl.textContent = `${Math.max(0, getNextLevelScore() - score)} pts`;
-    seedRuleEl.textContent = `${BLACK_TO_WALL_TURNS} flags to wall`;
   }
   
   function updatePowerupUI() {
@@ -2290,18 +2220,17 @@
     const container = document.querySelector('.container');
     const header = document.querySelector('.header');
     const powerupsBar = document.querySelector('.powerups-bar');
-    const statusBar = document.querySelector('.status-bar');
     const piecesTray = document.getElementById('pieces');
     const boardWrap = document.querySelector('.board-container');
-    if (!container || !header || !powerupsBar || !statusBar || !piecesTray || !boardWrap) return;
+    if (!container || !header || !powerupsBar || !piecesTray || !boardWrap) return;
 
     const styles = getComputedStyle(container);
     const padY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
     const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
     const gap = parseFloat(styles.gap) || 0;
 
-    const fixedHeight = header.offsetHeight + powerupsBar.offsetHeight + statusBar.offsetHeight + piecesTray.offsetHeight;
-    const availableHeight = window.innerHeight - padY - (gap * 4) - fixedHeight;
+    const fixedHeight = header.offsetHeight + powerupsBar.offsetHeight + piecesTray.offsetHeight;
+    const availableHeight = window.innerHeight - padY - (gap * 3) - fixedHeight;
     const availableWidth = Math.min(container.clientWidth, window.innerWidth) - padX;
 
     const nextSize = Math.floor(Math.min(520, availableWidth, availableHeight));
