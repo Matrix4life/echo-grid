@@ -970,7 +970,7 @@
       bombBtn.classList.add('powerup-active');
       showToast('💣 Bomb Active', 'Click a cell to clear 3×3 area');
       sounds.powerup();
-      vibrate(50);
+      vibrate(150);
     }
   });
   
@@ -981,7 +981,7 @@
       rowBtn.classList.add('powerup-active');
       showToast('↔️ Row Clear Active', 'Click any row to clear it');
       sounds.powerup();
-      vibrate(50);
+      vibrate(150);
     }
   });
   
@@ -992,7 +992,7 @@
       colBtn.classList.add('powerup-active');
       showToast('↕️ Column Clear Active', 'Click any column to clear it');
       sounds.powerup();
-      vibrate(50);
+      vibrate(150);
     }
   });
   
@@ -1004,7 +1004,7 @@
       updatePowerupUI();
       showToast('🔄 Pieces Shuffled!', 'Fresh pieces ready');
       sounds.powerup();
-      vibrate(50);
+      vibrate(150);
     }
   });
   
@@ -1108,28 +1108,32 @@
   }
   
   function vibrate(pattern) {
-    if (!navigator.vibrate) return;
-    
-    // Handle both single values and arrays
-    try {
-      if (typeof pattern === 'number') {
-        navigator.vibrate(pattern);
-      } else if (Array.isArray(pattern)) {
-        navigator.vibrate(pattern);
-      }
-    } catch (e) {
-      console.log('Vibration not supported');
+    // NativeHaptics is injected by MainActivity via addJavascriptInterface.
+    // It calls Android's Vibrator service directly — bypasses silent mode.
+    if (window.NativeHaptics) {
+      try {
+        const arg = Array.isArray(pattern) ? JSON.stringify(pattern) : String(pattern);
+        window.NativeHaptics.vibrate(arg);
+      } catch(e) {}
+      return;
+    }
+    // Fallback for browser/PWA
+    if (navigator.vibrate) {
+      try {
+        navigator.vibrate(0);
+        setTimeout(() => {
+          if (typeof pattern === 'number') navigator.vibrate(pattern);
+          else if (Array.isArray(pattern)) navigator.vibrate(pattern);
+        }, 10);
+      } catch(e) {}
     }
   }
-  
-  // Test vibration on first user interaction
+
   let vibrateInitialized = false;
   function initVibration() {
-    if (!vibrateInitialized && navigator.vibrate) {
-      vibrateInitialized = true;
-      // Small test vibration to wake up the API
-      navigator.vibrate(1);
-    }
+    if (vibrateInitialized) return;
+    vibrateInitialized = true;
+    vibrate(10);
   }
   
   // Particle system
@@ -1540,7 +1544,7 @@
     if (rewardMessage) {
       showToast(rewardMessage[0], rewardMessage[1]);
       sounds.powerup();
-      vibrate(100);
+      vibrate([200, 60, 250]);
     }
   }
 
@@ -1583,7 +1587,7 @@
       
       showToast('🎯 Level Up!', message);
       sounds.combo();
-      vibrate([50, 50, 50]);
+      vibrate([150, 50, 150]);
       
       // Visual flash warning
       canvas.parentElement.classList.add('shake');
@@ -1772,7 +1776,7 @@
         const pt = clientToCanvas(e.clientX, e.clientY);
         dragging = { piece: p, idx, x: pt.x, y: pt.y };
         hoverCell = pointerToGrid(e.clientX, e.clientY, { isTouch: e.pointerType === 'touch' });
-        vibrate(10); // Light haptic feedback on pickup
+        vibrate(80);
         if (e.cancelable) e.preventDefault();
       });
       
@@ -1784,7 +1788,7 @@
         const pt = clientToCanvas(t.clientX, t.clientY);
         dragging = { piece: p, idx, x: pt.x, y: pt.y };
         hoverCell = pointerToGrid(t.clientX, t.clientY, { isTouch: true });
-        vibrate(10); // Light haptic feedback on pickup
+        vibrate(80);
         if (e.cancelable) e.preventDefault();
       }, { passive: false });
       
@@ -1810,7 +1814,7 @@
       
       // Sound and haptic feedback
       sounds.place();
-      vibrate(20);
+      vibrate(150);
       
       // Create particles at placement
       const s = cellSize();
@@ -1854,10 +1858,10 @@
         // Sound effects
         if (comboCount > 1) {
           sounds.combo();
-          vibrate([30, 30, 30]);
+          vibrate([150, 50, 150]);
         } else {
           sounds.snap();
-          vibrate(50);
+          vibrate(150);
         }
         
         // Create explosion particles at captured blocks
@@ -1874,7 +1878,7 @@
         if (size >= 6) {
           canvas.parentElement.classList.add('shake');
           setTimeout(() => canvas.parentElement.classList.remove('shake'), 300);
-          vibrate([50, 50, 50, 50]);
+          vibrate([150, 60, 150, 60]);
         }
         
         showToast(
@@ -1906,7 +1910,7 @@
       
       if (!anyMoveAvailable()) {
         sounds.gameOver();
-        vibrate(200);
+        vibrate(300);
         setGameOver(true);
       }
     }
@@ -1924,7 +1928,7 @@
     if (!cell) return;
     
     sounds.powerup();
-    vibrate([30, 30, 30]);
+    vibrate([150, 50, 150]);
     
     if (activePowerup === 'bomb') {
       // Clear 3×3 area - NOW CLEARS ALL TILE TYPES
