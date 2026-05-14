@@ -3,11 +3,13 @@
   "short_name": "SnapField",
   "description": "A satisfying block-placing puzzle game. Snap pieces to the grid, clear rows, and chain combos!",
   "start_url": "/",
+  "scope": "/",
   "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "categories": ["games", "puzzle"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icon-192.png",
